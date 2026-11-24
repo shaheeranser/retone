@@ -1,0 +1,26 @@
+{
+  "messages": [
+    {
+      "content": [
+        {
+          "text": "Make it better.",
+          "type": "text"
+        },
+        {
+          "image": "image-object",
+          "type": "image"
+        }
+      ],
+      "role": "user"
+    },
+    {
+      "content": [
+        {
+          "text": "{\"exposure\": 24}",
+          "type": "text"
+        }
+      ],
+      "role": "assistant"
+    }
+  ]
+}
