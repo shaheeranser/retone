@@ -28,4 +28,5 @@ def from_float(
     """Clip float32 RGB to [0, 1] and quantise to the given integer dtype."""
     peak = _MAX_BY_DTYPE[np.dtype(dtype)]
     scaled = np.clip(rgb, 0.0, 1.0) * np.float32(peak)
-    return np.rint(scaled).astype(dtype)
+    quantised: NDArray[np.integer[Any]] = np.rint(scaled).astype(dtype)
+    return quantised
