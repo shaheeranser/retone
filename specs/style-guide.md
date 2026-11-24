@@ -96,7 +96,8 @@ if not schema.exposure.contains(ev):
 
 - Python 3.11+. Full type annotations on every function; strict type checking
   must pass. No `Any` without a comment saying why; no blanket `# type: ignore`.
-- `from __future__ import annotations` at the top of each module.
+- `from __future__ import annotations` at the top of each module, right after the
+  module docstring.
 - Public API of a package is what its `__init__.py` re-exports and nothing else;
   `__init__.py` holds no logic. Import from the module that owns the symbol.
 - Prefer plain functions and frozen dataclasses (or pydantic models at I/O

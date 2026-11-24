@@ -12,21 +12,21 @@ skeleton and settles the toolchain. Read
       agent trailers.
 - [x] **T-1.3** — Add `AGENTS.md`, `CONTRIBUTING.md`, the PR template, and the
       `specs/` standards.
-- [ ] **T-1.4** — Create the public GitHub repository `shaheeranser/retone` and
-      push (needs owner confirmation before the first push).
+- [x] **T-1.4** — Create the public GitHub repository `shaheeranser/retone` and
+      push.
 
 ## 2. Toolchain
 
-- [ ] **T-2.1** — Add `pyproject.toml` with the `src/retone` package layout, the
-      `retone` console script, and a `train` optional extra for training-only
-      dependencies. *(OD-01, OD-02)*
-- [ ] **T-2.2** — Configure lint, format and strict type checking; fix the exact
+- [x] **T-2.1** — Add `pyproject.toml` with the `src/retone` package layout and
+      a `dev` extra. The `retone` console script and the `train` extra are added
+      by the milestones that need them (`05`, `03`). *(OD-01, OD-02)*
+- [x] **T-2.2** — Configure lint, format and strict type checking; fix the exact
       commands and write them into `AGENTS.md` "Build, test, lint". *(OD-01)*
-- [ ] **T-2.3** — Configure pytest with `integration` marker skipped by default,
+- [x] **T-2.3** — Configure pytest with `integration` marker skipped by default,
       and the `--update-golden` option.
-- [ ] **T-2.4** — Add a CI workflow running the commands from T-2.2 on push and
+- [x] **T-2.4** — Add a CI workflow running the commands from T-2.2 on push and
       pull request.
-- [ ] **T-2.5** — Add empty package skeletons for the modules in
+- [x] **T-2.5** — Add empty package skeletons for the modules in
       `architecture.md` §4, each with a one-line responsibility docstring and an
       import test proving `executor` imports nothing else from the project.
 
@@ -47,8 +47,10 @@ skeleton and settles the toolchain. Read
 
 ## Open decisions
 
-- **OD-01** — Python tooling. Working assumption: Python 3.11+, uv, ruff
-  (lint + format), mypy strict, pytest, hypothesis. Not yet confirmed.
+- **OD-01** — Python tooling. Resolved 2026-11-24 (owner: go ahead): Python
+  3.11+, ruff (lint + format), mypy strict, pytest, hypothesis. `uv` is not
+  installed on the dev machine, so the documented flow is venv + pip with a
+  tool-agnostic `pyproject.toml`; uv can use it unchanged.
 - **OD-02** — CLI framework (argparse vs click vs typer) and distribution
   (`uv tool` / `pipx` from PyPI vs a PyInstaller single binary). Linux first,
   but the tool should be usable on as many platforms as possible.
