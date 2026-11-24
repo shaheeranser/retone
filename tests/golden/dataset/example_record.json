@@ -1,0 +1,37 @@
+{
+  "answer": "{\"exposure\": 24, \"temperature\": -8, \"tint\": 0, \"contrast\": 15, \"highlights\": -20, \"shadows\": 10, \"saturation\": 5, \"vibrance\": 12, \"sharpen_amount\": 0}",
+  "degradation": {
+    "contrast": -15,
+    "exposure": -24,
+    "highlights": 20,
+    "saturation": -5,
+    "shadows": -10,
+    "sharpen_amount": 0,
+    "temperature": 8,
+    "tint": 0,
+    "vibrance": -12
+  },
+  "id": "photo-00-synthetic",
+  "image": "images/photo-00-synthetic.jpg",
+  "instruction": "You are a photo retoucher. Look at the photo and choose adjustment values that make it look better without changing its content. Reply with one JSON object whose keys are exposure, temperature, tint, contrast, highlights, shadows, saturation, vibrance and sharpen_amount. Each value is an integer from -100 to 100, except sharpen_amount which is 0 to 100. Zero means no change.",
+  "kind": "synthetic",
+  "params": {
+    "contrast": 15,
+    "exposure": 24,
+    "highlights": -20,
+    "saturation": 5,
+    "shadows": 10,
+    "sharpen_amount": 0,
+    "temperature": -8,
+    "tint": 0,
+    "vibrance": 12
+  },
+  "residual": 0.0012,
+  "source": {
+    "license": "Unsplash License",
+    "photo_id": "photo",
+    "photographer": "Tester",
+    "url": "https://unsplash.com/photos/photo"
+  },
+  "split": "train"
+}
