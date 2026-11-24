@@ -93,7 +93,7 @@ GB peak RSS. Time is dominated by allocating and filling many 288 MB float
 temporaries, not by any single formula. A table-interpolation variant of the
 curves was tried and was slower (`np.interp` works in float64), so it was
 discarded. Strip-wise processing with threads would likely cut this several
-times, but sharpening needs overlap between strips, so it is left as OD-01.
+times, but sharpening needs overlap between strips, so it is deferred (OD-01).
 
 ## 7. Failure modes
 
@@ -105,11 +105,11 @@ times, but sharpening needs overlap between strips, so it is left as OD-01.
 
 ## Open decisions
 
-- **OD-01** — Render speed on 24 MP photos. Keep the current whole-array
-  implementation (simple, 11 to 31 s), or process in horizontal strips with
-  overlap and threads (several times faster, more code). Constants stay frozen
-  for `02` either way, because strip processing must not change results beyond
-  rounding.
+- **OD-01** — Render speed on 24 MP photos. Resolved 2026-11-24 (owner agreed):
+  keep the simple whole-array implementation. Real 10 to 16 MP photos render in 2
+  to 10 s on the target laptop. Strip-wise processing with overlap and threads
+  stays a later option if the full pipeline feels slow after `04`; it must not
+  change results beyond rounding.
 
 OD-01 to OD-04 of the earlier draft (parameter set, tone curve, saturation
 space, colour profiles) are resolved in section 5. Constant tuning is allowed
