@@ -21,3 +21,7 @@ data/cache/
 *.safetensors
 .cache/
 .env
+
+# validation photos and renders are private and never committed
+eval/images/
+eval/out/
