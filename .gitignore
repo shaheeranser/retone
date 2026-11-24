@@ -22,6 +22,5 @@ data/cache/
 .cache/
 .env
 
-# validation photos and renders are private and never committed
-eval/images/
-eval/out/
+# private validation photos and renders; anchored so src/retone/eval stays tracked
+/eval/
