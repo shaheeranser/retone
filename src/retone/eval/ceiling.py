@@ -9,7 +9,8 @@ from pathlib import Path
 from typing import Any
 
 from retone.eval.delta_e import mean_delta_e
-from retone.executor import ParamError, Params, apply, load_image, parse_params
+from retone.eval.records import params, photo_id
+from retone.executor import ParamError, apply, load_image
 from retone.executor.errors import ImageError
 
 
@@ -18,29 +19,6 @@ class CeilingResult:
     count: int
     mean_delta_e: float
     per_image: tuple[float, ...]
-
-
-def _field(record: Mapping[str, Any], name: str) -> object:
-    if name not in record:
-        raise ParamError((f"dataset record has no {name!r} field",))
-    return record[name]
-
-
-def _photo_id(record: Mapping[str, Any]) -> str:
-    source = _field(record, "source")
-    if not isinstance(source, Mapping) or "photo_id" not in source:
-        raise ParamError(("dataset record source has no photo_id",))
-    photo_id = source["photo_id"]
-    if not isinstance(photo_id, str):
-        raise ParamError(("dataset record photo_id must be a string",))
-    return photo_id
-
-
-def _params(record: Mapping[str, Any], name: str) -> Params:
-    raw = _field(record, name)
-    if not isinstance(raw, Mapping):
-        raise ParamError((f"dataset record {name!r} must be an object",))
-    return parse_params(raw).params
 
 
 def reconstruction_residual(
@@ -57,13 +35,13 @@ def reconstruction_residual(
             continue
         if limit is not None and len(scores) >= limit:
             break
-        photo_id = _photo_id(record)
-        path = path_for.get(photo_id)
+        photo_id_value = photo_id(record)
+        path = path_for.get(photo_id_value)
         if path is None:
-            raise ImageError(f"no source path for photo {photo_id!r}")
+            raise ImageError(f"no source path for photo {photo_id_value!r}")
         target = load_image(path)
-        input_image = apply(target, _params(record, "degradation"))
-        corrected = apply(input_image, _params(record, "params"))
+        input_image = apply(target, params(record, "degradation"))
+        corrected = apply(input_image, params(record, "params"))
         scores.append(mean_delta_e(corrected, target))
     if not scores:
         raise ImageError(f"no records for split {split!r}")
