@@ -66,7 +66,9 @@ temperature and tint do not change exposure. Sharpening radius is not a model
 output: it is the fixed fraction `0.0003` of the image diagonal (sigma). The
 tone curves act on sRGB-encoded values; the highlight and shadow strengths are
 chosen so every curve stays monotonic, which a property test checks. Gamut
-clipping after saturation is a per-channel clip.
+clipping after saturation is a per-channel clip. OpenCV's float LAB conversion
+uses lookup tables, so a LAB round trip drifts by up to about 0.004 (one 8-bit
+level); operations that use LAB are skipped at identity so identity stays exact.
 
 Resolved decisions:
 
