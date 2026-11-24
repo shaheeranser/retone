@@ -104,7 +104,13 @@ python -m retone.train.finetune --examples data/processed/examples.jsonl \
 ```
 
 Checkpoints, the adapter and the merged model are pushed to
-`$OUTPUT_REPO` and `$OUTPUT_REPO-merged`.
+`$OUTPUT_REPO` and `$OUTPUT_REPO-merged`. Baseline and fine-tuned predictions
+are scored on the held-out split with:
+
+```sh
+python -m retone.eval --examples data/processed/examples.jsonl \
+  --source-paths data/processed/source_paths.json --predictions predictions.jsonl
+```
 
 ## License
 
