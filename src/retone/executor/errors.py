@@ -9,3 +9,7 @@ class ParamError(ValueError):
     def __init__(self, problems: tuple[str, ...]) -> None:
         super().__init__("; ".join(problems))
         self.problems = problems
+
+
+class ImageError(ValueError):
+    """Raised when an image cannot be read, written, or is not a supported array."""
