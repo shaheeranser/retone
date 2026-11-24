@@ -17,9 +17,9 @@ back to defaults, because the server is a boundary.
 
 ## 3. Metrics
 
-ΔE is CIEDE2000 against Expert C at full resolution. Parameter MAE is against the
-fitted labels (the model's actual training target). Metrics live in `eval/` and
-depend only on the executor; they never import training code.
+ΔE is CIEDE2000 against the held-out target at full resolution. Parameter MAE is
+against the constructed labels (the model's actual training target). Metrics live
+in `eval/` and depend only on the executor; they never import training code.
 
 ## 4. Benchmark protocol
 

@@ -2,45 +2,65 @@
 
 Depends on `01-executor`.
 
+> **Revised 2026-11-24 (owner decision).** MIT-Adobe FiveK and every comparable
+> human-retouched set (PPR10K, MIT5K-derived sets) is licensed for non-commercial
+> research only, which a hackathon project cannot satisfy. The dataset is built
+> instead from permissively licensed Unsplash photographs with constructed
+> (input, target, label) pairs. See `design.md` §1. The old source and fitting
+> requirements are superseded; their IDs are not reused.
+
 ## Source
 
-- **DAT-SRC-1** — THE SYSTEM SHALL build the dataset from MIT-Adobe FiveK using
-  the downsized sRGB version, the standard 4,500 train / 500 test split, and
-  Expert C as the target.
-- **DAT-SRC-2** — THE SYSTEM SHALL record the dataset's license terms before any
-  derived data is published.
+- **DAT-SRC-1** — THE SYSTEM SHALL build the dataset from photographs covered by
+  the Unsplash License, recording each photo's id, photographer, source URL and
+  license in a source manifest.
+- **DAT-SRC-2** — THE SYSTEM SHALL record the dataset's license terms and the
+  per-image provenance before any derived data is published.
+- **DAT-SRC-3** — THE SYSTEM SHALL split photographs deterministically into
+  train and test sets by a hash of the photo id and a seed, so the split does not
+  depend on file order or worker count.
 
-## Label fitting
+## Pair construction
 
-- **DAT-FIT-1** — THE SYSTEM SHALL, per image, find parameters such that
-  `apply(original) ≈ expert` measured on 256 px copies, using the `01` executor.
-- **DAT-FIT-2** — THE SYSTEM SHALL run fitting in parallel across cores with a
-  bounded worker count and a per-image seed, so results are reproducible
-  regardless of core count.
-- **DAT-FIT-3** — THE SYSTEM SHALL record the final ΔE of each fit so poor fits
-  can be filtered.
-- **DAT-FIT-4** — WHEN the fitter cannot meet the time budget, THE SYSTEM MAY
-  use a PyTorch port of the executor, AND THE SYSTEM SHALL include a test that
-  both versions agree within a stated tolerance.
+- **DAT-PAIR-1** — THE SYSTEM SHALL build training pairs from a source photo `T`
+  by one of three kinds: identity (`input = T`, label all identity), synthetic
+  degradation (`input = apply(T, bad)`, label the inverse correction), or mild
+  correction (`input = apply(T, mild)`, label the inverse correction).
+- **DAT-PAIR-2** — THE SYSTEM SHALL sample degradation parameters per image from
+  a seeded RNG keyed by the photo id and the run seed, so results are identical
+  regardless of core count or processing order.
+- **DAT-PAIR-3** — THE SYSTEM SHALL reject a sampled degradation when it causes
+  more than the allowed fraction of newly clipped pixels, and resample.
+- **DAT-PAIR-4** — THE SYSTEM SHALL record a reconstruction residual for each
+  pair and drop pairs whose residual exceeds the configured threshold.
+- **DAT-PAIR-5** — THE SYSTEM SHALL never label sharpening from a degradation,
+  because sharpening cannot be inverted by the executor.
 
 ## Augmentation
 
-- **DAT-AUG-1** — THE SYSTEM SHALL create extra examples by applying random
-  "bad" parameters to well-edited images and labelling them with the correcting
-  parameters.
-- **DAT-AUG-2** — THE SYSTEM SHALL avoid augmentations that clip heavily.
+- **DAT-AUG-1** — THE SYSTEM SHALL treat synthetic degradation as the
+  augmentation mechanism and cap it at the configured ratio so examples do not
+  drift from realistic corrections.
+- **DAT-AUG-2** — THE SYSTEM SHALL avoid augmentations that clip heavily
+  (DAT-PAIR-3).
 
 ## Sharpening (v1)
 
-- **DAT-SHP-1** — THE SYSTEM SHALL set sharpening by a classical rule from a
-  sharpness and noise measure on a full-resolution crop, not learned.
+- **DAT-SHP-1** — THE SYSTEM SHALL provide a classical sharpening rule from
+  sharpness and noise measured on a full-resolution crop, not a learned value;
+  v1 training labels keep `sharpen_amount` at identity.
 
 ## Output
 
-- **DAT-OUT-1** — THE SYSTEM SHALL emit training examples as thumbnail (448 px)
-  plus optional 1:1 detail crop plus fixed instruction plus parameter JSON.
+- **DAT-OUT-1** — THE SYSTEM SHALL emit training examples as a 448 px thumbnail,
+  a fixed instruction and the parameter JSON (thumbnail only; no detail crop in
+  v1).
 - **DAT-OUT-2** — THE SYSTEM SHALL upload the dataset as a private Hugging Face
   dataset, with the token read only from the environment.
-- **DAT-OUT-3** — THE SYSTEM SHALL report, on the test set, the mean ΔE
-  (CIEDE2000) of fitted parameters versus Expert C at full resolution: the
-  quality ceiling of the parameter set.
+- **DAT-OUT-3** — THE SYSTEM SHALL report, on the test set, the mean CIEDE2000
+  ΔE between `apply(input, label)` and the target at full resolution, as the
+  reconstruction ceiling of the pair construction.
+- **DAT-OUT-4** — THE SYSTEM SHALL report per-parameter label variance so label
+  collapse is detected before training.
+- **DAT-OUT-5** — THE SYSTEM SHALL write a deterministic JSONL manifest plus
+  thumbnail images, and produce identical manifests for one worker and many.

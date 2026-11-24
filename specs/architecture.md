@@ -39,7 +39,7 @@ do the same with a lookup table.
 ## 3. Data flow
 
 ```text
-training (Colab)   FiveK -> label fitting (executor) -> dataset on HF
+training (Colab)   Unsplash photos -> constructed pairs (executor) -> dataset on HF
                    -> QLoRA fine-tune -> merge -> GGUF + mmproj -> HF
 
 inference (laptop) photo -> 448 px thumbnail -> llama-server (GGUF, JSON schema)
@@ -50,7 +50,7 @@ inference (laptop) photo -> 448 px thumbnail -> llama-server (GGUF, JSON schema)
 
 ```text
 src/retone/executor/   apply(), parameter schema, ranges, colour-space maths
-src/retone/data/       FiveK preparation, label fitting, augmentation
+src/retone/data/       Unsplash corpus loading, pair construction, examples
 src/retone/train/      fine-tuning and export entry scripts (run on Colab)
 src/retone/eval/       delta-E and parameter metrics, benchmark runner
 src/retone/inference/  llama-server client, thumbnailing, output validation
@@ -118,14 +118,16 @@ date and source.
 | Unsloth | fine-tuning | to record | to verify |
 | llama.cpp | inference | to record | to verify |
 | OpenCV, NumPy | executor | to record | to verify |
-| MIT-Adobe FiveK | training data | research-use terms suspected | **to verify; may restrict publishing the derived dataset and weights** |
+| Unsplash photos | training corpus | [Unsplash License](https://unsplash.com/license): irrevocable, worldwide, free commercial use, modification allowed; bars compiling into a competing stock service | verified 2026-11-24 |
+| `datasets`, `huggingface-hub`, Pillow (optional upload extra) | dataset upload | Apache-2.0, Apache-2.0, HPND | to verify |
+| MIT-Adobe FiveK | **not used** | research-only, non-commercial | rejected 2026-11-24; see `02-dataset` design §1 |
 
 ## 8. Evaluation contract
 
-All runs use the 500-image FiveK test set; delta-E is CIEDE2000 against Expert C
-at full resolution. The results table covers: fitted parameters (ceiling), base
-Qwen prompted, fine-tuned f16, Q8_0 and Q4_K_M, each with mean delta-E,
-parameter MAE, laptop latency and peak RAM. A thumbnail-validity check reports
-the mean delta-E between fitting on the full-res image and on its 448 px copy.
-Qwen time and full-resolution render time are reported separately on a 24 MP
-photo.
+All runs use the held-out Unsplash test split; delta-E is CIEDE2000 against the
+held-out target at full resolution. The results table covers: reconstruction
+ceiling (the analytic labels), base Qwen prompted, fine-tuned f16, Q8_0 and
+Q4_K_M, each with mean delta-E, parameter MAE, laptop latency and peak RAM. A
+thumbnail-validity check reports the mean delta-E between rendering from
+thumbnail-sized and full-resolution measurements. Qwen time and full-resolution
+render time are reported separately on a 24 MP photo.

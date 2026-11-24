@@ -12,8 +12,8 @@ Depends on `01-executor`, `02-dataset`, `03-finetune`.
 
 ## Metrics
 
-- **QE-MET-1** — THE SYSTEM SHALL compute mean CIEDE2000 ΔE against Expert C at
-  full resolution over the 500-image test set.
+- **QE-MET-1** — THE SYSTEM SHALL compute mean CIEDE2000 ΔE against the held-out
+  target at full resolution over the test split.
 - **QE-MET-2** — THE SYSTEM SHALL compute per-parameter mean absolute error
   against fitted parameters.
 - **QE-MET-3** — THE SYSTEM SHALL use the `01` executor for every render.

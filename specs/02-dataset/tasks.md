@@ -4,34 +4,43 @@ Read [`design.md`](./design.md) first.
 
 ## 1. Source
 
-- [ ] **T-1.1** — Download FiveK (downsized sRGB), implement the pair loader and
-      the 4,500/500 split with Expert C targets. *(DAT-SRC-1)*
-- [ ] **T-1.2** — Record license terms in `architecture.md` §7. *(DAT-SRC-2)*
+- [x] **T-1.1** — Implement the Unsplash source manifest loader and the
+      deterministic 90/10 split. *(DAT-SRC-1, DAT-SRC-3)*
+- [x] **T-1.2** — Record the Unsplash License and per-image provenance in
+      `architecture.md` §7 and the manifest. *(DAT-SRC-2)*
+- [x] **T-1.3** — Script fetching a photo subset; commit only a small fixture.
+      *(DAT-SRC-1)*
 
-## 2. Label fitting
+## 2. Pair construction
 
-- [ ] **T-2.1** — Implement the fitting objective (ΔE between `apply(original)`
-      and expert on 256 px copies). *(DAT-FIT-1)*
-- [ ] **T-2.2** — Implement the optimiser loop with per-image seeds. *(DAT-FIT-2;
-      OD-02)*
-- [ ] **T-2.3** — Parallelise with a bounded process pool. *(DAT-FIT-2)*
-- [ ] **T-2.4** — Persist fitted params with residual ΔE. *(DAT-FIT-3)*
-- [ ] **T-2.5** — Only if too slow: PyTorch executor port and agreement test.
-      *(DAT-FIT-4)*
-- [ ] **T-2.6** — Tests: fitting recovers known parameters on synthetic pairs;
-      reproducible across worker counts.
+- [x] **T-2.1** — Implement seeded degradation and mild-correction sampling with
+      a maximum parameter count. *(DAT-PAIR-2, DAT-AUG-1)*
+- [x] **T-2.2** — Implement the clipping guard: measure newly clipped pixels and
+      resample. *(DAT-PAIR-3, DAT-AUG-2)*
+- [x] **T-2.3** — Implement inverse labels and the reconstruction-residual
+      filter; exclude sharpening. *(DAT-PAIR-1, DAT-PAIR-4, DAT-PAIR-5)*
+- [x] **T-2.4** — Tests: identity pair is exact; labels negate the degradation;
+      clipping guard rejects; reproducibility across worker counts.
+- [x] **T-2.5** — Record the residual distribution and confirm the thresholds.
+      First real run (20 owner photos, 60 pairs): median 0.0014, p95 0.015,
+      max accepted 0.019, 6 pairs filtered at the 0.02 limit. *(DAT-PAIR-4;
+      OD-03)*
 
-## 3. Augmentation and sharpening
+## 3. Sharpening
 
-- [ ] **T-3.1** — Implement bad-parameter augmentation with a clipping guard.
-      *(DAT-AUG-1, DAT-AUG-2; OD-03)*
-- [ ] **T-3.2** — Implement the classical sharpening rule. *(DAT-SHP-1)*
+- [x] **T-3.1** — Implement the classical sharpening rule from a full-resolution
+      crop, with direction tests. *(DAT-SHP-1)*
 
 ## 4. Output
 
-- [ ] **T-4.1** — Build training examples with thumbnails, instruction and
-      parameter JSON. *(DAT-OUT-1; OD-04)*
-- [ ] **T-4.2** — Upload to a private Hugging Face dataset; token from the
-      environment only. *(DAT-OUT-2)*
-- [ ] **T-4.3** — Compute and record test-set ceiling ΔE. *(DAT-OUT-3)*
-- [ ] **T-4.4** — Check per-parameter label variance for collapse risk.
+- [x] **T-4.1** — Build 448 px thumbnails and deterministic JSONL examples with
+      the fixed instruction and parameter JSON. *(DAT-OUT-1, DAT-OUT-5)*
+- [x] **T-4.2** — Upload to a private Hugging Face dataset; token from the
+      environment only. Implemented; not executed here (no `HF_TOKEN`).
+      *(DAT-OUT-2)*
+- [x] **T-4.3** — Compute and record the test-set reconstruction ceiling ΔE.
+      19 held-out examples on 20 real photos: mean 0.56, max 2.06.
+      *(DAT-OUT-3)*
+- [x] **T-4.4** — Report per-parameter label variance for collapse risk.
+      *(DAT-OUT-4)*
+- [x] **T-4.5** — Golden tests for the instruction and one example record.

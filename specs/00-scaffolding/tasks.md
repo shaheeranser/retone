@@ -33,8 +33,8 @@ skeleton and settles the toolchain. Read
 ## 3. Licensing
 
 - [ ] **T-3.1** — Verify and record each license in `architecture.md` §7 with
-      date and source, in particular the MIT-Adobe FiveK terms and whether the
-      derived dataset and fine-tuned weights may be published. *(OD-03)*
+      date and source. The Unsplash corpus is recorded; dependency and model
+      licences remain to verify. *(OD-03)*
 - [ ] **T-3.2** — Add a `NOTICE` or README section stating third-party licenses.
 
 ## 4. Environment checks
@@ -54,9 +54,10 @@ skeleton and settles the toolchain. Read
 - **OD-02** — CLI framework (argparse vs click vs typer) and distribution
   (`uv tool` / `pipx` from PyPI vs a PyInstaller single binary). Linux first,
   but the tool should be usable on as many platforms as possible.
-- **OD-03** — Whether the FiveK terms permit publishing the derived dataset and
-  fine-tuned weights, and if not, what is published instead (code and scripts
-  only, or a different dataset).
+- **OD-03** — Whether the training-data terms permit publishing the derived
+  dataset and fine-tuned weights. Resolved 2026-11-24: FiveK and comparable sets
+  are research-only and were rejected; the Unsplash License permits publication,
+  so the derived dataset and weights may be published.
 - **OD-04** — Whether a vision-language base model (Qwen3.5-2B) is acceptable
   for judging, given the hackathon recommends Qwen3 0.6B, 1.7B or 4B.
   Resolved 2026-11-24: vision-language models are in scope (owner decision).
