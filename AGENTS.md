@@ -34,10 +34,17 @@ value you cannot justify.
 
 ## Build, test, lint
 
-The exact commands are fixed in `00-scaffolding` (OD-01 and OD-02). Until that
-milestone lands, this section is a placeholder; once it does, it lists the
-install, lint, type-check, test and build commands, and all of them must pass
-before a change is done.
+```sh
+python3 -m venv .venv && .venv/bin/pip install -e ".[dev]"
+.venv/bin/ruff check .
+.venv/bin/ruff format --check .      # must report nothing to reformat
+.venv/bin/mypy                       # strict
+.venv/bin/pytest                     # offline; integration tests skipped by default
+```
+
+All of these must pass before a change is done. CI runs the same commands on
+push and pull request. The CLI framework and distribution are still open
+(`00-scaffolding` OD-02), so there is no console script or build artifact yet.
 
 ## Python code style
 
