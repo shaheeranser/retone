@@ -1,0 +1,15 @@
+#!/usr/bin/env sh
+# Enforces specs/agent-practices.md section 4: labelled messages, no agent trailers.
+msg_file="$1"
+subject=$(head -n 1 "$msg_file")
+
+pattern='^(feat|fix|chore|docs|test|refactor|ci)(\([a-z0-9-]+\))?: .+'
+if ! printf '%s' "$subject" | grep -Eq "$pattern"; then
+  echo "commit-msg: subject must look like 'feat(scope): summary' (feat|fix|chore|docs|test|refactor|ci)" >&2
+  exit 1
+fi
+
+if grep -Eiq '^co-authored-by:' "$msg_file"; then
+  echo "commit-msg: Co-authored-by trailers are not allowed (specs/agent-practices.md section 4)" >&2
+  exit 1
+fi
