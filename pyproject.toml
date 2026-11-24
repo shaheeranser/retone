@@ -22,6 +22,10 @@ dev = [
     "ruff>=0.6",
     "mypy>=1.11",
 ]
+upload = [
+    "datasets>=2.20",
+    "huggingface-hub>=0.24",
+]
 
 [project.urls]
 Repository = "https://github.com/shaheeranser/retone"
@@ -45,6 +49,10 @@ strict = true
 python_version = "3.11"
 mypy_path = "src"
 packages = ["retone"]
+
+[[tool.mypy.overrides]]
+module = ["datasets", "datasets.*", "huggingface_hub", "huggingface_hub.*"]
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
