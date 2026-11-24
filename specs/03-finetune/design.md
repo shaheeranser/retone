@@ -30,11 +30,13 @@ Checkpoints are pushed to Hugging Face every few hundred steps.
 
 ## 4. Execution model
 
-Code is edited locally and pushed to GitHub. `colab run --gpu L4
-train/finetune.py` (or `colab new/exec/stop`) runs a script that starts by
-cloning the repo and pulling data from Hugging Face. It ends by merging the LoRA
-and pushing the adapter and merged model; GGUF conversion and quantization are
-handled in `04`.
+Code is edited locally and pushed to GitHub. A self-contained shell entry,
+`scripts/train_remote.sh`, clones the repo on any GPU host, installs the `train`
+extra, pulls the private dataset from Hugging Face, and runs
+`python -m retone.train.finetune`. The same command works in a Colab free
+notebook, a Kaggle notebook, or an SSH GPU box; no Colab-specific API or CLI is
+assumed. It ends by pushing checkpoints, the LoRA adapter and the merged model;
+GGUF conversion and quantization are handled in `04`.
 
 ## 5. Failure modes
 
@@ -54,5 +56,7 @@ handled in `04`.
   benefit); links to `02` OD-04.
 - **OD-03** — Hyperparameters beyond the starting point (rank, LR, epochs,
   bins), decided from validation behaviour.
-- **OD-04** — Compute: Colab AI Pro T4/L4 only, or an alternative if a run
-  cannot fit before the deadline.
+- **OD-04** — Compute. Resolved 2026-11-24: target a 16 GB T4 on any available
+  host (Colab free, Kaggle, or an SSH GPU box). The entry script is
+  host-agnostic; Colab Pro is not required, and Google AI Pro is unrelated.
+  A paid hourly host is the fallback if free capacity is unavailable.

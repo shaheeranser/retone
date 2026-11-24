@@ -39,7 +39,7 @@ do the same with a lookup table.
 ## 3. Data flow
 
 ```text
-training (Colab)   Unsplash photos -> constructed pairs (executor) -> dataset on HF
+training (GPU host) Unsplash photos -> constructed pairs (executor) -> dataset on HF
                    -> QLoRA fine-tune -> merge -> GGUF + mmproj -> HF
 
 inference (laptop) photo -> 448 px thumbnail -> llama-server (GGUF, JSON schema)
@@ -51,7 +51,7 @@ inference (laptop) photo -> 448 px thumbnail -> llama-server (GGUF, JSON schema)
 ```text
 src/retone/executor/   apply(), parameter schema, ranges, colour-space maths
 src/retone/data/       Unsplash corpus loading, pair construction, examples
-src/retone/train/      fine-tuning and export entry scripts (run on Colab)
+src/retone/train/      fine-tuning and export entry scripts (run on any GPU host)
 src/retone/eval/       delta-E and parameter metrics, benchmark runner
 src/retone/inference/  llama-server client, thumbnailing, output validation
 src/retone/cli/        argument parsing, command handlers, rendering, wiring
@@ -92,8 +92,10 @@ train -> data, executor
 ## 6. Models, data and artifacts
 
 Code lives in GitHub; data and models live in Hugging Face repos while working;
-Colab is disposable compute. The hackathon submission requires a public model
-link, so what becomes public is decided in `06-submission` OD-01.
+GPU hosts are disposable compute (Colab free, Kaggle, or an SSH box) and the
+training scripts make no host-specific assumption. The hackathon submission
+requires a public model link, so what becomes public is decided in
+`06-submission` OD-01.
 
 | Artifact | Approx. size (2B) | Stored on |
 |---|---|---|
@@ -120,6 +122,8 @@ date and source.
 | OpenCV, NumPy | executor | to record | to verify |
 | Unsplash photos | training corpus | [Unsplash License](https://unsplash.com/license): irrevocable, worldwide, free commercial use, modification allowed; bars compiling into a competing stock service | verified 2026-11-24 |
 | `datasets`, `huggingface-hub`, Pillow (optional upload extra) | dataset upload | Apache-2.0, Apache-2.0, HPND | to verify |
+| Unsloth, TRL, transformers, PEFT, accelerate (optional train extra) | fine-tuning | Apache-2.0 per project metadata | to verify |
+| lm-format-enforcer (optional train extra) | constrained JSON generation | MIT | to verify |
 | MIT-Adobe FiveK | **not used** | research-only, non-commercial | rejected 2026-11-24; see `02-dataset` design §1 |
 
 ## 8. Evaluation contract

@@ -38,8 +38,9 @@ Depends on `01-executor` and `02-dataset`.
   clones the repo, pulls the dataset from Hugging Face, trains, and pushes
   artifacts back, with the token read only from the environment or Colab
   Secrets.
-- **FT-RUN-2** — THE SYSTEM SHALL be runnable via `colab run --gpu L4` or a
-  named Colab session.
+- **FT-RUN-2** — THE SYSTEM SHALL be runnable with one command on a Colab free
+  notebook, a Kaggle notebook, or an SSH GPU host.
+- **FT-RUN-3** — THE SYSTEM SHALL NOT depend on a Colab-specific API or CLI.
 
 ## Quality
 

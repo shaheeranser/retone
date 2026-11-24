@@ -114,9 +114,11 @@ time, run the tests, and keep refactoring separate from behaviour changes. Never
 rewrite a large module in a single pass, never weaken a failing test to make a
 refactor pass, and do not add an abstraction for a hypothetical third case.
 
-## 12. Colab and secrets
+## 12. GPU hosts and secrets
 
-Training scripts run on disposable Colab VMs, so each one is self-contained:
-it clones the repo, pulls data from Hugging Face, and pushes checkpoints and
-artifacts back. Tokens come from the environment or Colab Secrets, never from
-code, config files, or logs. Models and datasets never enter git.
+Training scripts run on disposable GPU VMs (Colab free, Kaggle, or an SSH box),
+so each one is self-contained: it clones the repo, pulls data from Hugging Face,
+and pushes checkpoints and artifacts back. No script depends on a
+host-specific notebook API or CLI. Tokens come from the environment or host
+secrets, never from code, config files, or logs. Models and datasets never enter
+git.

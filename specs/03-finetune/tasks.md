@@ -14,23 +14,24 @@ Read [`design.md`](./design.md) first.
 
 ## 2. Baseline
 
-- [ ] **T-2.1** — Prompted base model with a JSON-constrained grammar on the test
-      set. *(FT-BASE-1)*
+- [x] **T-2.1** — Prompted base model with a JSON-constrained grammar on the test
+      set. Harness implemented (`train/baseline.py` with lm-format-enforcer);
+      the GPU run is pending. *(FT-BASE-1)*
 
 ## 3. Training
 
-- [ ] **T-3.1** — Implement the example formatter (thumbnail, instruction, JSON,
+- [x] **T-3.1** — Implement the example formatter (thumbnail, instruction, JSON,
       thinking off). *(FT-TRN-1)*
-- [ ] **T-3.2** — Implement the QLoRA training script with periodic Hugging Face
+- [x] **T-3.2** — Implement the QLoRA training script with periodic Hugging Face
       checkpoints. *(FT-TRN-2, FT-TRN-3, FT-TRN-4)*
-- [ ] **T-3.3** — Add the prediction-variance check and the coarser-bin retrain
+- [x] **T-3.3** — Add the prediction-variance check and the coarser-bin retrain
       path. *(FT-TRN-5)*
-- [ ] **T-3.4** — Make the entry script self-contained for Colab. *(FT-RUN-1,
-      FT-RUN-2)*
+- [x] **T-3.4** — Make the entry script self-contained for any GPU host.
+      *(FT-RUN-1, FT-RUN-2, FT-RUN-3)*
 
 ## 4. Validation
 
 - [ ] **T-4.1** — Compare fine-tuned ΔE against the baseline on the test set and
       record before/after on unseen images. *(FT-QLT-1)*
-- [ ] **T-4.2** — Tests: example formatter (golden), schema compliance of target
+- [x] **T-4.2** — Tests: example formatter (golden), schema compliance of target
       JSON, no token reads outside the environment. Offline, no GPU.
