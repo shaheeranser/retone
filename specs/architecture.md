@@ -91,8 +91,9 @@ train -> data, executor
 
 ## 6. Models, data and artifacts
 
-Code lives in GitHub; data and models live in private Hugging Face repos; Colab
-is disposable compute.
+Code lives in GitHub; data and models live in Hugging Face repos while working;
+Colab is disposable compute. The hackathon submission requires a public model
+link, so what becomes public is decided in `06-submission` OD-01.
 
 | Artifact | Approx. size (2B) | Stored on |
 |---|---|---|

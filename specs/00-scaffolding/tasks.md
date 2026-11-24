@@ -39,9 +39,9 @@ skeleton and settles the toolchain. Read
 
 ## 4. Environment checks
 
-- [ ] **T-4.1** — Read the hackathon starter repo's CONTRIBUTING and
-      PROJECT_REPORT and record the required submission contents in
-      `06-submission`. *(OD-05)*
+- [x] **T-4.1** — Read the hackathon starter repo's CONTRIBUTING and
+      showcase rules and record the required submission contents in
+      `06-submission`. *(OD-05, resolved by `06-submission/requirements.md`)*
 - [ ] **T-4.2** — Confirm the VLM base model is acceptable for the hackathon
       with the organizers. *(OD-04)*
 
@@ -58,3 +58,5 @@ skeleton and settles the toolchain. Read
 - **OD-04** — Whether a vision-language base model (Qwen3.5-2B) is acceptable
   for judging, given the hackathon recommends Qwen3 0.6B, 1.7B or 4B.
 - **OD-05** — Exact submission contents for the PR to the starter repo.
+  Resolved 2026-11-24: see `06-submission/requirements.md`. Remaining
+  consequence: the rules require a public model link and public demo video.
