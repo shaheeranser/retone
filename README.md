@@ -50,7 +50,7 @@ usage above describes the intended tool, not what runs now.
 | `00-scaffolding` | in progress (dependency licences still being recorded) |
 | `01-executor` | implemented and tested |
 | `02-dataset` | implemented; first real Unsplash build and upload pending |
-| `03-finetune` | specified |
+| `03-finetune` | implemented; GPU gate and training run pending |
 | `04-quantize-eval` | specified |
 | `05-cli` | specified |
 | `06-submission` | specified |
@@ -81,6 +81,30 @@ git config core.hooksPath scripts/hooks   # labelled commits, no agent trailers
 ```
 
 The lint, type-check and test commands are listed in `AGENTS.md`.
+
+### Training on a remote GPU
+
+Training needs a CUDA GPU with about 16 GB of VRAM. `scripts/train_remote.sh` is
+host-agnostic: it clones the repo, installs the `train` extra, pulls the private
+dataset and runs the fine-tune. The same command works in a Colab free notebook,
+a Kaggle notebook, or an SSH GPU box.
+
+```sh
+export DATASET_REPO=you/retone-dataset
+export OUTPUT_REPO=you/retone-qwen
+export HF_TOKEN=...                 # never commit this
+bash scripts/train_remote.sh        # add --max-steps 60 for a smoke run
+```
+
+Validate the dataset and formatter without a GPU or token:
+
+```sh
+python -m retone.train.finetune --examples data/processed/examples.jsonl \
+  --image-root data/processed --dry-run --bin-step 5
+```
+
+Checkpoints, the adapter and the merged model are pushed to
+`$OUTPUT_REPO` and `$OUTPUT_REPO-merged`.
 
 ## License
 
