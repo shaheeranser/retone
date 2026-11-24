@@ -26,6 +26,17 @@ upload = [
     "datasets>=2.20",
     "huggingface-hub>=0.24",
 ]
+train = [
+    "accelerate>=1.0",
+    "datasets>=2.20",
+    "huggingface-hub>=0.24",
+    "lm-format-enforcer>=0.10",
+    "peft>=0.13",
+    "pillow>=10",
+    "transformers>=4.46",
+    "trl>=0.12",
+    "unsloth",
+]
 
 [project.urls]
 Repository = "https://github.com/shaheeranser/retone"
@@ -51,7 +62,28 @@ mypy_path = "src"
 packages = ["retone"]
 
 [[tool.mypy.overrides]]
-module = ["datasets", "datasets.*", "huggingface_hub", "huggingface_hub.*"]
+module = [
+    "accelerate",
+    "accelerate.*",
+    "datasets",
+    "datasets.*",
+    "huggingface_hub",
+    "huggingface_hub.*",
+    "lmformatenforcer",
+    "lmformatenforcer.*",
+    "peft",
+    "peft.*",
+    "PIL",
+    "PIL.*",
+    "torch",
+    "torch.*",
+    "transformers",
+    "transformers.*",
+    "trl",
+    "trl.*",
+    "unsloth",
+    "unsloth.*",
+]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
