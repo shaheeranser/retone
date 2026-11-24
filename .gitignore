@@ -1,0 +1,23 @@
+# working records, not committed (see specs/agent-practices.md section 5)
+reports/
+
+# python
+__pycache__/
+*.py[cod]
+.venv/
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+.hypothesis/
+dist/
+build/
+*.egg-info/
+
+# models, data and caches stay on Hugging Face, never in git
+models/
+data/raw/
+data/cache/
+*.gguf
+*.safetensors
+.cache/
+.env
