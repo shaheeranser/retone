@@ -46,6 +46,8 @@ schema. IDs are stable; tasks cite them.
 
 ## Quality
 
-- **EXE-QLT-1** — WHEN hand-tuned parameters are applied to a set of 20 test
-  photos, THE SYSTEM SHALL make them look clearly better, judged by the owner
-  and recorded in the run report.
+- **EXE-QLT-1** — WHEN each parameter is set to an extreme value on a set of 20
+  real photos, THE SYSTEM SHALL produce a clearly visible change in the
+  expected direction, confirmed by the owner. (Revised 2026-11-24 by the owner:
+  this check proves the pipeline works end to end; whether hand-tuned values
+  look better is not required, since the model's quality is judged in `04`.)

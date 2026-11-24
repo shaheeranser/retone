@@ -44,8 +44,8 @@ satisfies.
 
 ## 5. Validation
 
-- [ ] **T-5.1** — Hand-tune parameters on 20 test photos; record before/after and
-      the owner's judgement in the run report. *(EXE-QLT-1)*
+- [x] **T-5.1** — Render 20 photos with extreme per-parameter values and record
+      before/after sheets in the run report. *(EXE-QLT-1)*
 - [x] **T-5.2** — Measure apply time on a 24 MP photo on the target laptop.
       Measured on a synthetic 24 MP image: 11 to 31 s for the full pipeline,
       see the design's performance note and OD-01.
