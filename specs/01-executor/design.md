@@ -84,7 +84,18 @@ The exact constants (EV span, gain exponents, curve strengths) are starting
 values. They may be retuned during T-5.1 hand-tuning, but only before `02`
 fits labels, because changing them afterwards invalidates every label.
 
-## 6. Failure modes
+## 6. Performance (measured 2026-11-24)
+
+On the target laptop (i7-1185G7, 16 GB, other applications holding about 12 GB),
+`apply()` on a synthetic 24 MP 8-bit image takes 0.4 s at identity and 11 to 31 s
+with every operation active (the spread follows memory pressure), with about 2.1
+GB peak RSS. Time is dominated by allocating and filling many 288 MB float
+temporaries, not by any single formula. A table-interpolation variant of the
+curves was tried and was slower (`np.interp` works in float64), so it was
+discarded. Strip-wise processing with threads would likely cut this several
+times, but sharpening needs overlap between strips, so it is left as OD-01.
+
+## 7. Failure modes
 
 - Out-of-range model output: clamped and reported (EXE-SCH-2).
 - Extreme parameters clipping heavily: ranges are chosen so identity-adjacent
@@ -94,6 +105,13 @@ fits labels, because changing them afterwards invalidates every label.
 
 ## Open decisions
 
-None open. OD-01 to OD-04 are resolved in section 5. Constant tuning is allowed
+- **OD-01** — Render speed on 24 MP photos. Keep the current whole-array
+  implementation (simple, 11 to 31 s), or process in horizontal strips with
+  overlap and threads (several times faster, more code). Constants stay frozen
+  for `02` either way, because strip processing must not change results beyond
+  rounding.
+
+OD-01 to OD-04 of the earlier draft (parameter set, tone curve, saturation
+space, colour profiles) are resolved in section 5. Constant tuning is allowed
 until `02-dataset` starts fitting; after that any change to an operation's
 meaning requires regenerating the dataset and is a new decision.
