@@ -41,22 +41,22 @@ Linux is the primary target, and the tool should work on macOS and Windows too.
 
 ## Status
 
-Early. Today the repository holds the project standards, the design specs and an
-empty package skeleton. **The `retone` command does not exist yet.** The usage
-above describes the intended tool, not what runs now.
+Early. The deterministic executor and the dataset builder are implemented and
+tested. **The `retone` command does not exist yet**; it arrives in `05-cli`. The
+usage above describes the intended tool, not what runs now.
 
 | Milestone | State |
 |---|---|
-| `00-scaffolding` | in progress |
-| `01-executor` | specified |
-| `02-dataset` | specified |
+| `00-scaffolding` | in progress (dependency licences still being recorded) |
+| `01-executor` | implemented and tested |
+| `02-dataset` | implemented; first real Unsplash build and upload pending |
 | `03-finetune` | specified |
 | `04-quantize-eval` | specified |
 | `05-cli` | specified |
 | `06-submission` | specified |
 | `07-extensions` (GUI, sliders, learned sharpening) | deferred |
 
-Planned results (fitted-parameter ceiling, base versus fine-tuned, f16 / Q8_0 /
+Planned results (reconstruction ceiling, base versus fine-tuned, f16 / Q8_0 /
 Q4_K_M, laptop latency and memory) will be published here once measured.
 
 ## How the project is built
@@ -85,6 +85,7 @@ The lint, type-check and test commands are listed in `AGENTS.md`.
 ## License
 
 MIT, see [`LICENSE`](./LICENSE). The licenses of the base model, training data and
-dependencies are tracked in `specs/architecture.md` section 7. The MIT-Adobe FiveK
-dataset terms are still being verified and may limit what derived data and model
-weights can be published.
+dependencies are tracked in `specs/architecture.md` section 7. The training corpus
+uses photographs under the Unsplash License, which permits commercial use and
+modification. MIT-Adobe FiveK and comparable research-only retouching datasets
+are not used because their terms forbid this kind of publication.
