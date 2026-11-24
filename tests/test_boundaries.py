@@ -33,7 +33,11 @@ def imported_roots(module: str) -> tuple[set[str], set[str]]:
             if isinstance(node, ast.Import):
                 names = [alias.name for alias in node.names]
             elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
-                names = [node.module]
+                # "from retone import cli" names the project module in the alias, not the path.
+                if node.module == "retone":
+                    names = [f"retone.{alias.name}" for alias in node.names]
+                else:
+                    names = [node.module]
             for name in names:
                 parts = name.split(".")
                 if parts[0] == "retone" and len(parts) > 1:
