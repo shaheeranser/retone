@@ -7,6 +7,9 @@ Read [`design.md`](./design.md) first.
 - [ ] **T-1.1** — Implement the `llama-server` client with a fake for tests.
       *(CLI-PIP-1, CLI-PIP-3; OD-02)*
 - [ ] **T-1.2** — Implement thumbnailing in linear light. *(CLI-PIP-1)*
+- [ ] **T-1.4** — Warn on stderr when the input carries a non-sRGB ICC profile and
+      never convert it (`01-executor` design, resolved OD-04). Detecting the profile
+      needs a reader beyond OpenCV; choose it here. *(CLI-PIP-2)*
 - [ ] **T-1.3** — Validate and clamp model output with fallback to defaults.
       *(CLI-PIP-2)*
 
