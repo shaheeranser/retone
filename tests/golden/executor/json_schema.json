@@ -1,0 +1,62 @@
+{
+  "type": "object",
+  "properties": {
+    "exposure": {
+      "type": "integer",
+      "minimum": -100,
+      "maximum": 100
+    },
+    "temperature": {
+      "type": "integer",
+      "minimum": -100,
+      "maximum": 100
+    },
+    "tint": {
+      "type": "integer",
+      "minimum": -100,
+      "maximum": 100
+    },
+    "contrast": {
+      "type": "integer",
+      "minimum": -100,
+      "maximum": 100
+    },
+    "highlights": {
+      "type": "integer",
+      "minimum": -100,
+      "maximum": 100
+    },
+    "shadows": {
+      "type": "integer",
+      "minimum": -100,
+      "maximum": 100
+    },
+    "saturation": {
+      "type": "integer",
+      "minimum": -100,
+      "maximum": 100
+    },
+    "vibrance": {
+      "type": "integer",
+      "minimum": -100,
+      "maximum": 100
+    },
+    "sharpen_amount": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100
+    }
+  },
+  "required": [
+    "exposure",
+    "temperature",
+    "tint",
+    "contrast",
+    "highlights",
+    "shadows",
+    "saturation",
+    "vibrance",
+    "sharpen_amount"
+  ],
+  "additionalProperties": false
+}

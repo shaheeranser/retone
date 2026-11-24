@@ -49,4 +49,5 @@ packages = ["retone"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-ra"
+pythonpath = ["tests"]
 markers = ["integration: needs the real model, server or network; skipped by default"]
