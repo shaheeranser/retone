@@ -48,11 +48,18 @@ def upload_dataset(
     from huggingface_hub import HfApi
 
     rows = _rows(examples_path, image_root)
+    print(f"uploading {len(rows)} examples to {repo_id}", file=sys.stderr)
     HfApi(token=token).create_repo(
         repo_id=repo_id, repo_type="dataset", private=private, exist_ok=True
     )
     dataset = Dataset.from_list(rows).cast_column("image", Image())
     dataset.push_to_hub(repo_id, private=private, token=token)
+    files = HfApi(token=token).list_repo_files(repo_id, repo_type="dataset")
+    if not any(name.endswith(".parquet") for name in files):
+        raise RuntimeError(
+            f"push completed but {repo_id} has no parquet files (found {files}); "
+            "the upload did not write the dataset"
+        )
     return repo_id
 
 
