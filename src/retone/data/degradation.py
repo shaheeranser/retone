@@ -51,7 +51,10 @@ def _peak(image: NDArray[Any]) -> float:
 
 def _clipped_mask(image: NDArray[Any]) -> NDArray[np.bool_]:
     peak = _peak(image)
-    return np.any((image == 0) | (image == peak), axis=2)
+    mask: NDArray[np.bool_] = (image == 0) | (image == peak)
+    # numpy 2.4 stubs type ndarray.any() as Any, so the cast is explicit.
+    clipped: NDArray[np.bool_] = np.asarray(mask.any(axis=2), dtype=np.bool_)
+    return clipped
 
 
 def newly_clipped_fraction(target: NDArray[Any], degraded: NDArray[Any]) -> float:
