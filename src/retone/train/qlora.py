@@ -51,7 +51,20 @@ def load_examples_from_hub(
     """Pull the private dataset and split rows by their recorded `split` column."""
     from datasets import load_dataset
 
-    bundle = load_dataset(settings.dataset_repo, token=token)
+    try:
+        bundle = load_dataset(
+            settings.dataset_repo,
+            token=token,
+            download_mode="force_redownload",
+        )
+    except Exception as err:  # dataset is an untrusted external boundary
+        raise DatasetError(
+            (
+                f"cannot load dataset {settings.dataset_repo!r}: {err}. "
+                "Run `python -m retone.train.upload_dataset ...` first and check "
+                "that the repo contains parquet files.",
+            )
+        ) from err
     dataset = bundle["train"] if "train" in bundle else bundle[next(iter(bundle))]
     train: list[TrainingExample] = []
     test: list[TrainingExample] = []
