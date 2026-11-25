@@ -7,6 +7,7 @@ function that needs it and PyTorch objects are typed as `Any` at this seam.
 from __future__ import annotations
 
 import inspect
+import shutil
 import sys
 from collections.abc import Sequence
 from dataclasses import dataclass, replace
@@ -257,6 +258,7 @@ def train_once(
         str(merged_dir), loaded.tokenizer, save_method="merged_16bit"
     )
     _upload_folder(merged_dir, f"{settings.output_repo}-merged", token, settings.private)
+    shutil.rmtree(merged_dir, ignore_errors=True)
     return loaded
 
 
