@@ -48,6 +48,11 @@ def test_identity_prediction_scores_zero(tmp_path: Path) -> None:
     assert score.count == 1
     assert score.mean_delta_e == 0.0
     assert score.overall_mae == 0.0
+    assert score.mean_psnr_db == 100.0
+    assert score.mean_ssim == pytest.approx(1.0, abs=1e-6)
+    assert score.baseline_delta_e == 0.0
+    assert score.baseline_psnr_db == 100.0
+    assert score.baseline_ssim == pytest.approx(1.0, abs=1e-6)
 
 
 def test_wrong_prediction_has_error_and_delta(tmp_path: Path) -> None:
@@ -55,6 +60,10 @@ def test_wrong_prediction_has_error_and_delta(tmp_path: Path) -> None:
     score = score_predictions([_record()], {"photo-00": Params(exposure=10)}, {"photo": path})
     assert score.overall_mae > 0.0
     assert score.mean_delta_e > 0.0
+    assert score.mean_psnr_db < 100.0
+    assert score.mean_ssim < 1.0
+    assert score.baseline_delta_e == 0.0
+    assert score.baseline_psnr_db == 100.0
 
 
 def test_load_predictions_round_trip_and_duplicates(tmp_path: Path) -> None:

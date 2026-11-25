@@ -10,6 +10,7 @@ from retone.eval.human import (
 )
 from retone.eval.predictions import PredictionScore, parameter_mae, score_predictions
 from retone.eval.review import ReviewBundle, build_review_bundle
+from retone.eval.similarity import psnr, ssim
 
 __all__ = [
     "CeilingResult",
@@ -22,8 +23,10 @@ __all__ = [
     "load_human_pairs",
     "mean_delta_e",
     "parameter_mae",
+    "psnr",
     "reconstruction_residual",
     "render_predictions",
     "score_predictions",
     "srgb_to_lab",
+    "ssim",
 ]

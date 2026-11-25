@@ -10,6 +10,7 @@ from typing import Any
 
 from retone.eval.delta_e import mean_delta_e
 from retone.eval.records import field, params, photo_id
+from retone.eval.similarity import psnr, ssim
 from retone.executor import SCHEMA, ParamError, Params, apply, load_image, parse_params
 from retone.executor.errors import ImageError
 
@@ -20,6 +21,11 @@ class PredictionScore:
     mean_delta_e: float
     parameter_mae: dict[str, float]
     overall_mae: float
+    mean_psnr_db: float
+    mean_ssim: float
+    baseline_delta_e: float
+    baseline_psnr_db: float
+    baseline_ssim: float
 
 
 def parameter_mae(predicted: Sequence[Params], expected: Sequence[Params]) -> dict[str, float]:
@@ -68,6 +74,11 @@ def score_predictions(
 ) -> PredictionScore:
     """Render each prediction on the full-resolution input and score it against the target."""
     deltas: list[float] = []
+    psnrs: list[float] = []
+    ssims: list[float] = []
+    baseline_deltas: list[float] = []
+    baseline_psnrs: list[float] = []
+    baseline_ssims: list[float] = []
     guessed: list[Params] = []
     expected: list[Params] = []
     for record in records:
@@ -81,9 +92,15 @@ def score_predictions(
             raise ImageError(f"no source path for photo {photo_id(record)!r}")
         target = load_image(source)
         input_image = apply(target, params(record, "degradation"))
-        corrected = apply(input_image, predictions.get(example_id, Params()))
+        prediction = predictions.get(example_id, Params())
+        corrected = apply(input_image, prediction)
         deltas.append(mean_delta_e(corrected, target))
-        guessed.append(predictions.get(example_id, Params()))
+        psnrs.append(psnr(corrected, target))
+        ssims.append(ssim(corrected, target))
+        baseline_deltas.append(mean_delta_e(input_image, target))
+        baseline_psnrs.append(psnr(input_image, target))
+        baseline_ssims.append(ssim(input_image, target))
+        guessed.append(prediction)
         expected.append(params(record, "params"))
     if not deltas:
         raise ImageError(f"no records for split {split!r}")
@@ -93,4 +110,9 @@ def score_predictions(
         mean_delta_e=sum(deltas) / len(deltas),
         parameter_mae=mae,
         overall_mae=sum(mae.values()) / len(mae),
+        mean_psnr_db=sum(psnrs) / len(psnrs),
+        mean_ssim=sum(ssims) / len(ssims),
+        baseline_delta_e=sum(baseline_deltas) / len(baseline_deltas),
+        baseline_psnr_db=sum(baseline_psnrs) / len(baseline_psnrs),
+        baseline_ssim=sum(baseline_ssims) / len(baseline_ssims),
     )
