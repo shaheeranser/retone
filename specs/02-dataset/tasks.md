@@ -10,6 +10,8 @@ Read [`design.md`](./design.md) first.
       `architecture.md` §7 and the manifest. *(DAT-SRC-2)*
 - [x] **T-1.3** — Script fetching a photo subset; commit only a small fixture.
       *(DAT-SRC-1)*
+- [x] **T-1.4** — Collect the owner's before/after edits, including software and
+      numeric variants, into a gitignored folder with a manifest. *(DAT-SRC-4)*
 
 ## 2. Pair construction
 
@@ -25,6 +27,8 @@ Read [`design.md`](./design.md) first.
       First real run (20 owner photos, 60 pairs): median 0.0014, p95 0.015,
       max accepted 0.019, 6 pairs filtered at the 0.02 limit. *(DAT-PAIR-4;
       OD-03)*
+- [ ] **T-2.6** — Recover labels for the human-edited pairs and filter by
+      residual. Method is OD-05. *(DAT-PAIR-6)*
 
 ## 3. Sharpening
 

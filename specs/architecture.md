@@ -97,6 +97,11 @@ training scripts make no host-specific assumption. The hackathon submission
 requires a public model link, so what becomes public is decided in
 `06-submission` OD-01.
 
+An optional private set of the owner's own before/after edits may complement or
+verify the corpus. It is collected into `data/raw/pairs/` (gitignored), never
+published, and needs fitted labels before training can use it; until then it is
+a verification set.
+
 | Artifact | Approx. size (2B) | Stored on |
 |---|---|---|
 | LoRA adapter | tens of MB | Hugging Face (backup) |
@@ -121,6 +126,7 @@ date and source.
 | llama.cpp | inference | to record | to verify |
 | OpenCV, NumPy | executor | to record | to verify |
 | Unsplash photos | training corpus | [Unsplash License](https://unsplash.com/license): irrevocable, worldwide, free commercial use, modification allowed; bars compiling into a competing stock service | verified 2026-11-24 |
+| Owner's own before/after edits | optional verification or training | owner-owned; copied only to gitignored `data/raw/pairs/` | recorded 2026-11-24 |
 | `datasets`, `huggingface-hub`, Pillow (optional upload extra) | dataset upload | Apache-2.0, Apache-2.0, HPND | to verify |
 | Unsloth, TRL, transformers, PEFT, accelerate (optional train extra) | fine-tuning | Apache-2.0 per project metadata | to verify |
 | lm-format-enforcer (optional train extra) | constrained JSON generation | MIT | to verify |

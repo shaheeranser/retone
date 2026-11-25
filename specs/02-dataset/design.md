@@ -38,6 +38,22 @@ Because the label is analytic (the negated degradation), no optimiser is needed:
 reintroduced if a future milestone needs true inversion of a clipped
 degradation.
 
+## 1a. Optional human-edited pairs
+
+A private folder of the owner's own edits can complement or verify the synthetic
+set. The collector pairs `name.ext` with `name(edit...).ext` in the same folder.
+It accepts `(edit)`, `(edited)`, a software suffix such as
+`(edited_lightroom)`, and a numeric variant written as `(edit)2`,
+`(edited)(2)` or `(edited 2)`. Multiple edited versions share one original and
+become separate pairs. Pairs are copied to the gitignored `data/raw/pairs/` with
+a `pairs.jsonl` manifest; nothing from the owner's library is published.
+
+These edits carry no parameter values, so they are directly usable as a
+verification set (render the model's parameters on the before image and compare
+to the after image) but not yet as training labels. Training on them requires
+label recovery (OD-05). A third option is distilling advice from a larger model;
+it is deferred until the fitting path exists and its terms are checked.
+
 ## 2. Pipeline
 
 ```text
@@ -120,11 +136,17 @@ instruction is one fixed string (golden-tested).
 - **OD-01** — What may be published given the source terms. Resolved 2026-11-24:
   the Unsplash License permits commercial use and modification; derived
   thumbnails and weights may be published. Provenance is retained.
-- **OD-02** — Optimiser. Resolved 2026-11-24: none; labels are analytic. Revisit
-  only if a future source provides real retouched pairs.
+- **OD-02** — Optimiser. Resolved 2026-11-24 for constructed pairs: none; labels
+  are analytic. Reopened for human-edited pairs, which need label recovery
+  (OD-05).
 - **OD-03** — Residual threshold and augmentation ratio. Resolved 2026-11-24 with
   the table in §4; retunable until `03-finetune` starts.
 - **OD-04** — Detail crop. Resolved 2026-11-24: thumbnail only in v1.
+- **OD-05** — Label recovery for human-edited pairs. Not decided. Candidate:
+  bounded coordinate descent over the integer schema, minimising a colour
+  difference on 256 px copies and dropping fits whose residual is too high.
+  Alternatives are verification-only use (no labels) and distillation from a
+  larger model. Decide before these pairs enter training.
 
 The thresholds in §4 were set from the inversion guard and then checked against
 measured residuals. Changing them after `03` training starts requires

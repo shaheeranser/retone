@@ -19,6 +19,10 @@ Depends on `01-executor`.
 - **DAT-SRC-3** — THE SYSTEM SHALL split photographs deterministically into
   train and test sets by a hash of the photo id and a seed, so the split does not
   depend on file order or worker count.
+- **DAT-SRC-4** — THE SYSTEM SHALL collect an optional private set of
+  human-edited before/after pairs from a folder tree, recognise the documented
+  edit-suffix variants, copy them into a gitignored work folder and write a
+  provenance manifest.
 
 ## Pair construction
 
@@ -35,6 +39,10 @@ Depends on `01-executor`.
   pair and drop pairs whose residual exceeds the configured threshold.
 - **DAT-PAIR-5** — THE SYSTEM SHALL never label sharpening from a degradation,
   because sharpening cannot be inverted by the executor.
+- **DAT-PAIR-6** — WHEN human-edited pairs are used for training, THE SYSTEM MAY
+  recover parameter labels by fitting, and SHALL record each fit's residual and
+  drop fits above the threshold. The fitting method is OD-05 and is not part of
+  this milestone's implementation.
 
 ## Augmentation
 
