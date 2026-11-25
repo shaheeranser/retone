@@ -16,7 +16,9 @@ from retone.data.errors import DatasetError
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Collect before/after photo pairs")
     parser.add_argument("--source", type=Path, required=True, help="folder to search recursively")
-    parser.add_argument("--dest", type=Path, default=Path("data/human"), help="copy destination")
+    parser.add_argument(
+        "--dest", type=Path, default=Path("artifacts/data/human"), help="copy destination"
+    )
     parser.add_argument(
         "--exclude",
         action="append",
