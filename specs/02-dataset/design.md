@@ -54,6 +54,13 @@ to the after image) but not yet as training labels. Training on them requires
 label recovery (OD-05). A third option is distilling advice from a larger model;
 it is deferred until the fitting path exists and its terms are checked.
 
+The original is the orientation reference. When an edit's pixel dimensions are on
+the other axis, the collector rotates it back, choosing 90 or 270 degrees by
+structural similarity on a small gradient map so the decision survives tone
+edits. Directories whose names match `_*` (backup or corrupt folders) are skipped
+by default and `--exclude` overrides that. Rotations, skipped directories and
+unreadable files are reported in the summary.
+
 ## 2. Pipeline
 
 ```text

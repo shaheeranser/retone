@@ -11,7 +11,8 @@ Read [`design.md`](./design.md) first.
 - [x] **T-1.3** — Script fetching a photo subset; commit only a small fixture.
       *(DAT-SRC-1)*
 - [x] **T-1.4** — Collect the owner's before/after edits, including software and
-      numeric variants, into a gitignored folder with a manifest. *(DAT-SRC-4)*
+      numeric variants, and rotate edits to the original orientation, into a
+      gitignored folder with a manifest. *(DAT-SRC-4)*
 
 ## 2. Pair construction
 

@@ -110,6 +110,10 @@ gitignored storage, never published:
 python -m retone.train.collect_pairs --source ~/pictures --dest data/raw/pairs
 ```
 
+Directories matching `_*` (backup or corrupt folders) are skipped by default;
+repeat `--exclude` to choose other patterns. Edits are rotated back to the
+original's orientation.
+
 Checkpoints, the adapter and the merged model are pushed to
 `$OUTPUT_REPO` and `$OUTPUT_REPO-merged`. Baseline and fine-tuned predictions
 are scored on the held-out split with:

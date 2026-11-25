@@ -21,8 +21,9 @@ Depends on `01-executor`.
   depend on file order or worker count.
 - **DAT-SRC-4** — THE SYSTEM SHALL collect an optional private set of
   human-edited before/after pairs from a folder tree, recognise the documented
-  edit-suffix variants, copy them into a gitignored work folder and write a
-  provenance manifest.
+  edit-suffix variants, rotate each edit to the original's orientation, copy
+  them into a gitignored work folder and write a provenance manifest. It SHALL
+  report rotations, skipped backup directories and unreadable files.
 
 ## Pair construction
 
