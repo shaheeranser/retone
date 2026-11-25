@@ -17,7 +17,7 @@ from retone.executor import Params, json_schema
 from retone.train.formatting import TrainingExample, to_vision_record
 from retone.train.parsing import parse_generated_params
 
-DEFAULT_MODEL = "Qwen/Qwen3.5-2B"
+DEFAULT_MODEL = "Qwen/Qwen2.5-VL-3B-Instruct"
 
 
 @dataclass(frozen=True)
