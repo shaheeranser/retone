@@ -1,6 +1,14 @@
 """Dataset preparation: Unsplash corpus loading, pair construction and examples."""
 
 from retone.data.build import BuildConfig, BuildSummary, build_dataset
+from retone.data.collect import (
+    CollectionSummary,
+    DiscoveredPair,
+    Discovery,
+    copy_pairs,
+    discover_pairs,
+    parse_edited,
+)
 from retone.data.corpus import SourceImage, derive_seed, load_manifest, split_items
 from retone.data.errors import DatasetError
 from retone.data.examples import INSTRUCTION, THUMBNAIL_LONG_EDGE, Example, thumbnail
@@ -12,7 +20,10 @@ __all__ = [
     "THUMBNAIL_LONG_EDGE",
     "BuildConfig",
     "BuildSummary",
+    "CollectionSummary",
     "DatasetError",
+    "DiscoveredPair",
+    "Discovery",
     "Example",
     "Pair",
     "PairKind",
@@ -22,8 +33,11 @@ __all__ = [
     "build_pair",
     "choose_kind",
     "classical_sharpen_amount",
+    "copy_pairs",
     "derive_seed",
+    "discover_pairs",
     "load_manifest",
+    "parse_edited",
     "split_items",
     "thumbnail",
 ]
