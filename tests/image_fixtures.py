@@ -22,5 +22,6 @@ def make_image(height: int = 64, width: int = 96, seed: int = 0) -> NDArray[np.u
 
 
 def write_image(path: Path, image: NDArray[np.integer[Any]]) -> Path:
+    path.parent.mkdir(parents=True, exist_ok=True)
     save_image(path, image)
     return path
