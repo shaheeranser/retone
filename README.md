@@ -142,8 +142,9 @@ os.environ["OUTPUT_REPO"] = "your-username/retone-qwen"
 ```
 
 Repeat with `MODEL=Qwen/Qwen3.5-2B` to gate the second candidate. Free Colab
-sessions can disconnect; checkpoints are pushed every `--save-steps` steps, so
-use a small value such as 50 for longer runs.
+sessions can disconnect; checkpoints are pushed every `--save-steps` steps. Pass
+`--resume` to the same command in a new session to download the latest
+checkpoint from Hugging Face and continue.
 
 On Colab, Secrets or `os.environ` are preferred to a `.env` file. If you do
 create `/content/retone/.env`, it is gitignored and the script will source it.

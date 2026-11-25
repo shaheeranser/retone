@@ -28,6 +28,8 @@ Read [`design.md`](./design.md) first.
       path. *(FT-TRN-5)*
 - [x] **T-3.4** — Make the entry script self-contained for any GPU host.
       *(FT-RUN-1, FT-RUN-2, FT-RUN-3)*
+- [x] **T-3.5** — Resume from the latest local or Hugging Face checkpoint when
+      `--resume` is passed. *(FT-TRN-6)*
 
 ## 4. Validation
 

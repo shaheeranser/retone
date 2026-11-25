@@ -36,6 +36,7 @@ class TrainSettings:
     max_steps: int = -1
     max_new_tokens: int = 128
     seed: int = 3407
+    resume: bool = False
     output_dir: Path = Path("outputs")
     private: bool = True
 
@@ -132,6 +133,37 @@ def _bf16_supported() -> bool:
     return bool(torch.cuda.is_available() and torch.cuda.is_bf16_supported())
 
 
+def _latest_checkpoint(directory: Path) -> Path | None:
+    candidates: list[tuple[int, Path]] = []
+    for path in directory.glob("checkpoint-*"):
+        step = path.name.removeprefix("checkpoint-")
+        if path.is_dir() and step.isdigit():
+            candidates.append((int(step), path))
+    return max(candidates, key=lambda item: item[0])[1] if candidates else None
+
+
+def _restore_checkpoint(settings: TrainSettings, token: str) -> Path | None:
+    """Use a local checkpoint, or pull the latest checkpoint folder from HF."""
+    local = _latest_checkpoint(settings.output_dir)
+    if local is not None or not settings.resume:
+        return local
+
+    from huggingface_hub import snapshot_download
+    from huggingface_hub.utils import EntryNotFoundError, RepositoryNotFoundError
+
+    try:
+        snapshot_download(
+            repo_id=settings.output_repo,
+            repo_type="model",
+            token=token,
+            local_dir=str(settings.output_dir),
+            allow_patterns=["checkpoint-*/*"],
+        )
+    except (EntryNotFoundError, RepositoryNotFoundError):
+        return None
+    return _latest_checkpoint(settings.output_dir)
+
+
 def _upload_folder(folder: Path, repo_id: str, token: str, private: bool) -> None:
     from huggingface_hub import HfApi
 
@@ -163,6 +195,9 @@ def train_once(
         seed=settings.seed,
     )
     settings.output_dir.mkdir(parents=True, exist_ok=True)
+    checkpoint = _restore_checkpoint(settings, token)
+    if checkpoint is not None:
+        print(f"resuming from {checkpoint}", file=sys.stderr)
     bf16 = _bf16_supported()
     arguments = SFTConfig(
         per_device_train_batch_size=settings.batch_size,
@@ -205,7 +240,7 @@ def train_once(
     )
     trainer_kwargs[tokenizer_keyword] = loaded.tokenizer
     trainer = SFTTrainer(**trainer_kwargs)
-    trainer.train()
+    trainer.train(resume_from_checkpoint=str(checkpoint) if checkpoint else None)
 
     loaded.model.push_to_hub(settings.output_repo, private=settings.private, token=token)
     merged_dir = settings.output_dir / "merged"

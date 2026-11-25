@@ -34,6 +34,9 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--lora-rank", type=int, default=16)
     parser.add_argument("--max-seq-length", type=int, default=2048)
     parser.add_argument("--save-steps", type=int, default=200)
+    parser.add_argument(
+        "--resume", action="store_true", help="resume from the latest local or HF checkpoint"
+    )
     parser.add_argument("--sample-size", type=int, default=16)
     parser.add_argument("--min-std", type=float, default=1.0)
     parser.add_argument("--max-attempts", type=int, default=2)
@@ -73,6 +76,7 @@ def _settings(args: argparse.Namespace) -> qlora.TrainSettings:
         max_steps=args.max_steps,
         max_new_tokens=args.max_new_tokens,
         seed=args.seed,
+        resume=args.resume,
         output_dir=args.output_dir,
         private=not args.public,
     )

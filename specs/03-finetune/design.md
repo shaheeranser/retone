@@ -42,7 +42,8 @@ GGUF conversion and quantization are handled in `04`.
 
 - Prediction collapse to dataset averages: variance check, coarser bins, more
   augmentation.
-- GPU session lost: frequent checkpoints.
+- GPU session lost: checkpoints are pushed every save step and `--resume`
+  downloads the latest one from Hugging Face before continuing.
 - Larger GPUs unavailable: everything sized for a T4.
 - Qwen2.5-VL-3B unsupported in tooling: gate falls back to Qwen3.5-2B, then
   0.8B.

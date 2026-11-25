@@ -34,6 +34,9 @@ Depends on `01-executor` and `02-dataset`.
 - **FT-TRN-5** — THE SYSTEM SHALL check prediction variance across images, and
   WHEN predictions barely vary, THE SYSTEM SHALL retrain with coarser bins
   (steps of 5).
+- **FT-TRN-6** — THE SYSTEM SHALL resume from the latest checkpoint, local or on
+  Hugging Face, when explicitly asked, so a lost GPU session does not restart
+  from zero.
 
 ## Execution
 
