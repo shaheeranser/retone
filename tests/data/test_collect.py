@@ -158,7 +158,7 @@ def test_matching_orientation_is_copied_untouched(tmp_path: Path) -> None:
     summary = copy_pairs(discover_pairs(source), destination)
     assert summary.rotated == 0
     row = json.loads((destination / "pairs.jsonl").read_text().splitlines()[0])
-    assert row["after"] == "images/p0001__after.png"
+    assert row["after"] == "after/p0001.png"
     assert load_image(destination / row["after"]).shape == before.shape
 
 
@@ -183,8 +183,8 @@ def test_unreadable_images_are_copied_and_counted(tmp_path: Path) -> None:
     summary = copy_pairs(discover_pairs(source), destination)
     assert summary.unreadable == 1
     assert summary.unreadable_files == ("BAD.heic",)
-    assert (destination / "images" / "p0001__before.heic").is_file()
-    assert (destination / "images" / "p0001__after.heic").is_file()
+    assert (destination / "before" / "p0001.heic").is_file()
+    assert (destination / "after" / "p0001.heic").is_file()
 
 
 def test_underscore_directories_are_skipped_by_default(tmp_path: Path) -> None:
@@ -201,3 +201,37 @@ def test_underscore_directories_are_skipped_by_default(tmp_path: Path) -> None:
     included = discover_pairs(source, exclude=())
     assert len(included.pairs) == 2
     assert not included.skipped
+
+
+def test_stale_managed_files_are_pruned(tmp_path: Path) -> None:
+    source = tmp_path / "pictures"
+    write_image(source / "OK.png", make_image(16, 20, seed=19))
+    write_image(source / "OK(edited).png", make_image(16, 20, seed=20))
+
+    destination = tmp_path / "out"
+    (destination / "before").mkdir(parents=True)
+    (destination / "after").mkdir(parents=True)
+    (destination / "before" / "p9999.png").write_bytes(b"stale")
+    (destination / "after" / "p9999.png").write_bytes(b"stale")
+    (destination / "before" / "notes.txt").write_text("keep me")
+
+    summary = copy_pairs(discover_pairs(source), destination)
+    assert summary.pruned == 2
+    assert not (destination / "before" / "p9999.png").exists()
+    assert not (destination / "after" / "p9999.png").exists()
+    assert (destination / "before" / "notes.txt").is_file()
+
+
+def test_pruning_can_be_disabled(tmp_path: Path) -> None:
+    source = tmp_path / "pictures"
+    write_image(source / "OK.png", make_image(16, 20, seed=21))
+    write_image(source / "OK(edited).png", make_image(16, 20, seed=22))
+
+    destination = tmp_path / "out"
+    (destination / "before").mkdir(parents=True)
+    stale = destination / "before" / "p9999.png"
+    stale.write_bytes(b"stale")
+
+    summary = copy_pairs(discover_pairs(source), destination, prune=False)
+    assert summary.pruned == 0
+    assert stale.is_file()

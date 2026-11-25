@@ -23,8 +23,8 @@ def test_cli_copies_pairs(tmp_path: Path, capsys: pytest.CaptureFixture[str]) ->
     assert summary["pairs"] == 1
     assert summary["destination"] == str(destination)
     assert (destination / "pairs.jsonl").is_file()
-    assert (destination / "images" / "p0001__before.png").is_file()
-    assert (destination / "images" / "p0001__after.png").is_file()
+    assert (destination / "before" / "p0001.png").is_file()
+    assert (destination / "after" / "p0001.png").is_file()
 
 
 def test_cli_reports_a_missing_source(tmp_path: Path) -> None:

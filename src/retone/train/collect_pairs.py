@@ -16,9 +16,7 @@ from retone.data.errors import DatasetError
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Collect before/after photo pairs")
     parser.add_argument("--source", type=Path, required=True, help="folder to search recursively")
-    parser.add_argument(
-        "--dest", type=Path, default=Path("data/raw/pairs"), help="copy destination"
-    )
+    parser.add_argument("--dest", type=Path, default=Path("data/human"), help="copy destination")
     parser.add_argument(
         "--exclude",
         action="append",
@@ -26,12 +24,13 @@ def main(argv: Sequence[str] | None = None) -> int:
         help="directory-name glob to skip, repeatable (default: _*; pass --exclude '' to disable)",
     )
     parser.add_argument("--dry-run", action="store_true", help="report without copying")
+    parser.add_argument("--no-prune", action="store_true", help="keep stale managed files")
     args = parser.parse_args(argv)
 
     exclude = tuple(args.exclude) if args.exclude is not None else DEFAULT_EXCLUDES
     try:
         discovery = discover_pairs(args.source, exclude=exclude)
-        summary = copy_pairs(discovery, args.dest, dry_run=args.dry_run)
+        summary = copy_pairs(discovery, args.dest, dry_run=args.dry_run, prune=not args.no_prune)
     except DatasetError as err:
         print(f"collect failed: {err}", file=sys.stderr)
         return 2

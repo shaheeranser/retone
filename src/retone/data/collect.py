@@ -32,6 +32,7 @@ _EDITED = re.compile(
     re.IGNORECASE | re.DOTALL,
 )
 _TAG = re.compile(r"^(?P<name>[a-z][a-z _-]*?)(?:[ _-]?(?P<number>\d+))?$")
+_MANAGED = re.compile(r"^p\d+(__|\.)")
 _FEATURE_SIZE = 64
 
 
@@ -83,6 +84,7 @@ class CollectionSummary:
     unreadable: int
     unreadable_files: tuple[str, ...]
     skipped_directories: int
+    pruned: int
     by_variant: dict[str, int]
     destination: str
 
@@ -148,6 +150,18 @@ def _pick_before(candidates: list[Path], after: Path) -> tuple[Path | None, bool
     same_suffix = [path for path in candidates if path.suffix.lower() == after.suffix.lower()]
     chosen = sorted(same_suffix or candidates)[0]
     return chosen, len(candidates) > 1
+
+
+def _prune(directory: Path, expected: set[str]) -> int:
+    """Delete managed pair files in a folder that the current manifest does not reference."""
+    if not directory.is_dir():
+        return 0
+    pruned = 0
+    for path in directory.iterdir():
+        if path.is_file() and path.name not in expected and _MANAGED.match(path.name):
+            path.unlink()
+            pruned += 1
+    return pruned
 
 
 def discover_pairs(root: Path, *, exclude: Sequence[str] = DEFAULT_EXCLUDES) -> Discovery:
@@ -244,8 +258,50 @@ def _orient_pair(pair: DiscoveredPair) -> tuple[Orientation, NDArray[Any] | None
     return orientation, rotated
 
 
+def _prepare_pair(
+    index: int,
+    pair: DiscoveredPair,
+    discovery: Discovery,
+    destination: Path,
+    dry_run: bool,
+) -> tuple[dict[str, object], Orientation]:
+    pair_id = f"p{index:04d}"
+    orientation, rotated_after = _orient_pair(pair)
+    before_name = f"{pair_id}{pair.before.suffix.lower()}"
+    if orientation.rotation:
+        after_name = f"{pair_id}.png"
+    else:
+        after_name = f"{pair_id}{pair.after.suffix.lower()}"
+
+    if not dry_run:
+        shutil.copy2(pair.before, destination / "before" / before_name)
+        if rotated_after is not None:
+            save_image(destination / "after" / after_name, rotated_after)
+        else:
+            shutil.copy2(pair.after, destination / "after" / after_name)
+    row: dict[str, object] = {
+        "pair_id": pair_id,
+        "role": "evaluation",
+        "before": f"before/{before_name}",
+        "after": f"after/{after_name}",
+        "before_source": str(pair.before.relative_to(discovery.root)),
+        "after_source": str(pair.after.relative_to(discovery.root)),
+        "variant": pair.edited.variant,
+        "software": pair.edited.software,
+        "version": pair.edited.version,
+        "rotation_after": orientation.rotation,
+        "before_size": orientation.before_size,
+        "after_size": orientation.after_size,
+    }
+    return row, orientation
+
+
 def copy_pairs(
-    discovery: Discovery, destination: Path, *, dry_run: bool = False
+    discovery: Discovery,
+    destination: Path,
+    *,
+    dry_run: bool = False,
+    prune: bool = True,
 ) -> CollectionSummary:
     """Orient, copy and describe every pair; the original is always the reference."""
     by_variant: dict[str, int] = {}
@@ -255,47 +311,30 @@ def copy_pairs(
     rotated = 0
     skipped = 0
     unreadable = 0
+    pruned = 0
     if not dry_run:
-        (destination / "images").mkdir(parents=True, exist_ok=True)
+        (destination / "before").mkdir(parents=True, exist_ok=True)
+        (destination / "after").mkdir(parents=True, exist_ok=True)
 
     for index, pair in enumerate(discovery.pairs, start=1):
-        pair_id = f"p{index:04d}"
-        orientation, rotated_after = _orient_pair(pair)
-        before_name = f"{pair_id}__before{pair.before.suffix.lower()}"
+        row, orientation = _prepare_pair(index, pair, discovery, destination, dry_run)
+        rows.append(row)
         if orientation.rotation:
-            after_name = f"{pair_id}__after.png"
             rotated += 1
             rotations[str(orientation.rotation)] += 1
-        else:
-            after_name = f"{pair_id}__after{pair.after.suffix.lower()}"
         if orientation.skipped:
             skipped += 1
         if orientation.unreadable:
             unreadable += 1
             unreadable_files.append(str(pair.before.relative_to(discovery.root)))
-
-        if not dry_run:
-            shutil.copy2(pair.before, destination / "images" / before_name)
-            if rotated_after is not None:
-                save_image(destination / "images" / after_name, rotated_after)
-            else:
-                shutil.copy2(pair.after, destination / "images" / after_name)
-        rows.append(
-            {
-                "pair_id": pair_id,
-                "before": f"images/{before_name}",
-                "after": f"images/{after_name}",
-                "before_source": str(pair.before.relative_to(discovery.root)),
-                "after_source": str(pair.after.relative_to(discovery.root)),
-                "variant": pair.edited.variant,
-                "software": pair.edited.software,
-                "version": pair.edited.version,
-                "rotation_after": orientation.rotation,
-                "before_size": orientation.before_size,
-                "after_size": orientation.after_size,
-            }
-        )
         by_variant[pair.edited.variant] = by_variant.get(pair.edited.variant, 0) + 1
+
+    if prune and not dry_run:
+        expected_before = {str(row["before"]).split("/", 1)[1] for row in rows}
+        expected_after = {str(row["after"]).split("/", 1)[1] for row in rows}
+        pruned = _prune(destination / "before", expected_before) + _prune(
+            destination / "after", expected_after
+        )
 
     if not dry_run:
         with (destination / "pairs.jsonl").open("w", encoding="utf-8") as manifest:
@@ -314,6 +353,7 @@ def copy_pairs(
             "orientation_skipped": skipped,
             "unreadable": unreadable,
             "unreadable_files": unreadable_files,
+            "pruned": pruned,
             "by_variant": by_variant,
         }
         (destination / "summary.json").write_text(
@@ -330,6 +370,7 @@ def copy_pairs(
         unreadable=unreadable,
         unreadable_files=tuple(unreadable_files),
         skipped_directories=len(discovery.skipped),
+        pruned=pruned,
         by_variant=by_variant,
         destination=str(destination),
     )
