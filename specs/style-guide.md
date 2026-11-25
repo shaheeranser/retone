@@ -30,7 +30,7 @@ def format_params_table(params): ...
 
 ```python
 src/retone/executor/color_space.py   # sRGB <-> linear light
-src/retone/data/corpus.py          # Unsplash manifest loading and split
+src/retone/data/corpus.py          # photo manifest loading and split
 src/retone/eval/delta_e.py           # CIEDE2000 metric
 src/retone/cli/render.py             # parameter table rendering
 ```

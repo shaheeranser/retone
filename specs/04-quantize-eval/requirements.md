@@ -17,6 +17,9 @@ Depends on `01-executor`, `02-dataset`, `03-finetune`.
 - **QE-MET-2** — THE SYSTEM SHALL compute per-parameter mean absolute error
   against the training labels.
 - **QE-MET-3** — THE SYSTEM SHALL use the `01` executor for every render.
+- **QE-MET-4** — THE SYSTEM SHALL report PSNR and SSIM between the restored image
+  and the target, alongside the do-nothing (identity) baseline for both metrics
+  and ΔE.
 
 ## Benchmark
 

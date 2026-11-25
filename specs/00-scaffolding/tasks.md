@@ -33,8 +33,8 @@ skeleton and settles the toolchain. Read
 ## 3. Licensing
 
 - [ ] **T-3.1** — Verify and record each license in `architecture.md` §7 with
-      date and source. The Unsplash corpus is recorded; dependency and model
-      licences remain to verify. *(OD-03)*
+      date and source. PD12M/Megalith are recorded and Unsplash is rejected;
+      dependency and model licences remain to verify. *(OD-03)*
 - [ ] **T-3.2** — Add a `NOTICE` or README section stating third-party licenses.
 
 ## 4. Environment checks
@@ -55,9 +55,9 @@ skeleton and settles the toolchain. Read
   (`uv tool` / `pipx` from PyPI vs a PyInstaller single binary). Linux first,
   but the tool should be usable on as many platforms as possible.
 - **OD-03** — Whether the training-data terms permit publishing the derived
-  dataset and fine-tuned weights. Resolved 2026-11-24: FiveK and comparable sets
-  are research-only and were rejected; the Unsplash License permits publication,
-  so the derived dataset and weights may be published.
+  dataset and fine-tuned weights. Resolved 2026-11-25: FiveK is research-only and
+  Unsplash's Terms §8 forbids ML/AI training; PD12M is CDLA-Permissive-2.0 over
+  public-domain/CC0 images, so the derived dataset and weights may be published.
 - **OD-04** — Whether a vision-language base model (Qwen3.5-2B) is acceptable
   for judging, given the hackathon recommends Qwen3 0.6B, 1.7B or 4B.
   Resolved 2026-11-24: vision-language models are in scope (owner decision).

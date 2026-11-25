@@ -31,8 +31,9 @@ Training must finish well before Saturday night.
 
 - The plan keeps models and data in private Hugging Face repos, but the
   submission requires a public model link: see OD-01.
-- The training corpus is Unsplash-licensed, so the derived dataset and
-  fine-tuned weights may be published; see `02-dataset` design §1.
+- The training corpus is PD12M (CDLA-Permissive-2.0 over public-domain/CC0
+  images), so the derived dataset and fine-tuned weights may be published; see
+  `02-dataset` design §1.
 - A vision-language base model may not match the organizers' recommended text
   models: `00-scaffolding` OD-04.
 - A late PR is not judged.
@@ -43,8 +44,8 @@ Training must finish well before Saturday night.
   adapter) and where (Hugging Face, ModelScope, both), reconciling the plan's
   "private repos" with the public-link rule.
 - **OD-02** — What to publish if the source terms forbid redistributing the
-  derived dataset. Resolved 2026-11-24: the Unsplash License permits it, so the
-  dataset and weights may be published; provenance is retained.
+  derived dataset. Resolved 2026-11-25: PD12M's CDLA-Permissive-2.0 terms permit
+  it, so the dataset and weights may be published; provenance is retained.
 - **OD-03** — Entry slug and project name, and the demo video format and host.
 - **OD-04** — The hard internal deadline for finishing training and opening the
   PR.

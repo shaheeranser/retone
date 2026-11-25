@@ -19,8 +19,10 @@ back to defaults, because the server is a boundary.
 ## 3. Metrics
 
 ΔE is CIEDE2000 against the held-out target at full resolution. Parameter MAE is
-against the constructed labels (the model's actual training target). Metrics live
-in `eval/` and depend only on the executor; they never import training code.
+against the training labels. PSNR and SSIM compare the restored render with the
+target, and the same metrics for the do-nothing identity render are reported as
+the baseline. Metrics live in `eval/` and depend only on the executor; they never
+import training code.
 
 ## 4. Benchmark protocol
 

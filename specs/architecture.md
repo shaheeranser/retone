@@ -13,7 +13,7 @@ deterministic OpenCV executor applies those values to the full-resolution
 original. The model chooses numbers; code applies them.
 
 It runs fully offline on a weak laptop (target: Intel i7-1185G7, 16 GB RAM, no
-CUDA) through llama.cpp. Training happens on Colab; the laptop only runs the
+CUDA) through llama.cpp. Training happens on a GPU host; the laptop only runs the
 finished GGUF model.
 
 Contrast with cloud "AI enhance": only global parametric operations are allowed,
@@ -39,7 +39,7 @@ do the same with a lookup table.
 ## 3. Data flow
 
 ```text
-training (GPU host) Unsplash photos -> constructed pairs (executor) -> dataset on HF
+training (GPU host) PD12M photos -> constructed pairs (executor) -> dataset on HF
                    -> QLoRA fine-tune -> merge -> GGUF + mmproj -> HF
 
 inference (laptop) photo -> 448 px thumbnail -> llama-server (GGUF, JSON schema)
@@ -50,7 +50,7 @@ inference (laptop) photo -> 448 px thumbnail -> llama-server (GGUF, JSON schema)
 
 ```text
 src/retone/executor/   apply(), parameter schema, ranges, colour-space maths
-src/retone/data/       Unsplash corpus loading, pair construction, examples
+src/retone/data/       PD12M corpus loading, pair construction, examples
 src/retone/train/      fine-tuning and export entry scripts (run on any GPU host)
 src/retone/eval/       delta-E and parameter metrics, benchmark runner
 src/retone/inference/  llama-server client, thumbnailing, output validation
@@ -112,9 +112,10 @@ committed. See [`data-layout.md`](./data-layout.md).
 | GGUF, Q4_K_M | ~1.5 GB | Hugging Face + laptop |
 | `mmproj`, f16 | hundreds of MB | Hugging Face + laptop |
 
-Primary model: Qwen3.5-2B (Apache 2.0 per its model card; to verify, see §7).
-Speed fallback Qwen3.5-0.8B; tooling fallback Qwen2.5-VL-3B. Thinking mode is
-disabled for this task. Avoid unofficial community distills.
+Primary gate: Qwen2.5-VL-3B, which Unsloth and llama.cpp support well.
+Second gate: Qwen3.5-2B, smaller but with unverified tooling support. Speed
+fallback Qwen3.5-0.8B. Thinking mode is disabled for this task. Avoid unofficial
+community distills.
 
 ## 7. Licensing and dependency register
 
@@ -124,11 +125,13 @@ date and source.
 
 | Component | Role | License | Status |
 |---|---|---|---|
-| Qwen3.5 weights | base model | Apache 2.0 (model card) | to verify |
+| Qwen2.5-VL-3B and Qwen3.5-2B weights | base model candidates | Apache 2.0 per model cards | to verify |
 | Unsloth | fine-tuning | to record | to verify |
 | llama.cpp | inference | to record | to verify |
 | OpenCV, NumPy | executor | to record | to verify |
-| Unsplash photos | training corpus | [Unsplash License](https://unsplash.com/license): irrevocable, worldwide, free commercial use, modification allowed; bars compiling into a competing stock service | verified 2026-11-24 |
+| PD12M | training corpus | CDLA-Permissive-2.0 dataset; images public domain/CC0 | verified 2026-11-25 (Hugging Face card) |
+| Megalith-10M | fallback corpus | MIT dataset; links to CC0/public-domain Flickr photos | verified 2026-11-25 (dataset card) |
+| Unsplash | **not used** | Terms of Service §8 forbids use in ML/AI datasets and training | rejected 2026-11-25 |
 | Owner's own before/after edits | evaluation only in v1 | owner-owned; copied only to gitignored `artifacts/data/human/` | recorded 2026-11-24 |
 | `datasets`, `huggingface-hub`, Pillow (optional upload extra) | dataset upload | Apache-2.0, Apache-2.0, HPND | to verify |
 | Unsloth, TRL, transformers, PEFT, accelerate (optional train extra) | fine-tuning | Apache-2.0 per project metadata | to verify |
@@ -137,13 +140,14 @@ date and source.
 
 ## 8. Evaluation contract
 
-All runs use the held-out Unsplash test split; delta-E is CIEDE2000 against the
+All runs use the held-out PD12M test split; delta-E is CIEDE2000 against the
 held-out target at full resolution. The results table covers: reconstruction
 ceiling (the analytic labels), base Qwen prompted, fine-tuned f16, Q8_0 and
-Q4_K_M, each with mean delta-E, parameter MAE, laptop latency and peak RAM. A
-thumbnail-validity check reports the mean delta-E between rendering from
-thumbnail-sized and full-resolution measurements. Qwen time and full-resolution
-render time are reported separately on a 24 MP photo.
+Q4_K_M, each with mean delta-E, parameter MAE, PSNR, SSIM, laptop latency and
+peak RAM. PSNR, SSIM and delta-E are also reported for the do-nothing identity
+baseline. A thumbnail-validity check reports the mean delta-E between rendering
+from thumbnail-sized and full-resolution measurements. Qwen time and
+full-resolution render time are reported separately on a 24 MP photo.
 
 The owner's human-edited pairs are an additional held-out set. There, a model
 prediction is applied to the full-resolution before image, delta-E to the human

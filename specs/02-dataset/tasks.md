@@ -4,15 +4,17 @@ Read [`design.md`](./design.md) first.
 
 ## 1. Source
 
-- [x] **T-1.1** — Implement the Unsplash source manifest loader and the
+- [x] **T-1.1** — Implement the PD12M source manifest loader and the
       deterministic 90/10 split. *(DAT-SRC-1, DAT-SRC-3)*
-- [x] **T-1.2** — Record the Unsplash License and per-image provenance in
+- [x] **T-1.2** — Record the PD12M/CDLA terms and per-image provenance in
       `architecture.md` §7 and the manifest. *(DAT-SRC-2)*
-- [x] **T-1.3** — Script fetching a photo subset; commit only a small fixture.
-      *(DAT-SRC-1)*
+- [x] **T-1.3** — Script fetching a PD12M subset with license and hash checks;
+      commit only a small fixture. *(DAT-SRC-1)*
 - [x] **T-1.4** — Collect the owner's before/after edits, including software and
       numeric variants, and rotate edits to the original orientation, into a
       gitignored folder with a manifest. *(DAT-SRC-4)*
+- [x] **T-1.5** — Reject small, dark, clipped, blurry or extreme-aspect sources
+      before they become targets. *(DAT-SRC-5)*
 
 ## 2. Pair construction
 
@@ -30,6 +32,8 @@ Read [`design.md`](./design.md) first.
       OD-03)*
 - [ ] **T-2.6** — Deferred: human-edited pairs are evaluation-only in v1, so no
       labels are fitted. Reopens if they enter training. *(DAT-PAIR-6; OD-05)*
+- [x] **T-2.7** — Round synthetic labels to a configurable step, default 5.
+      *(DAT-PAIR-7)*
 
 ## 3. Sharpening
 

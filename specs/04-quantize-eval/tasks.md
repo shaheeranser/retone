@@ -15,6 +15,7 @@ Read [`design.md`](./design.md) first.
 - [x] **T-2.2** — Per-parameter MAE. *(QE-MET-2)*
 - [x] **T-2.3** — Tests: ΔE of identical images is zero, known-colour fixtures,
       symmetric where expected.
+- [x] **T-2.4** — PSNR and SSIM with a do-nothing baseline. *(QE-MET-4)*
 
 ## 3. Benchmark
 

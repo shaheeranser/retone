@@ -11,13 +11,19 @@ submission, a public model link and a public demo do not fit that grant, and the
 same restriction applies to PPR10K and every MIT5K-derived retouching set we
 checked. The owner therefore replaced the source on 2026-11-24.
 
-The replacement is the Unsplash corpus: the Unsplash License grants an
-irrevocable, worldwide, free right to download, modify and use images
-commercially, without attribution, and only bars compiling them into a competing
-stock service. That is compatible with this project.
+Unsplash was the next candidate but was rejected on 2026-11-25: its Terms of
+Service §8 prohibits using images "in connection with any machine learning
+and/or artificial intelligence datasets", regardless of the broad image licence.
+
+The current source is **PD12M** (`Spawning/PD12M`): 12.4M public-domain/CC0
+images, a CDLA-Permissive-2.0 dataset licence, per-image `license`, `source`,
+`hash`, dimensions and hosted S3 URLs, and quality/safety filtering built in.
+Megalith-10M (`madebyollin/megalith-10m`, MIT dataset, links to CC0/PD Flickr
+photos) is the fallback. Both are permissive enough to train and publish derived
+weights.
 
 ```text
-Unsplash photo T (well-edited)  ->  target
+PD12M photo T (well-exposed)  ->  target
         |                               ^
         | seeded degradation            | executor.apply
         v                               |
@@ -33,8 +39,11 @@ Three kinds share a photo:
   `-bad`. This is the augmentation mechanism and teaches large corrections.
 - **mild** — the same with small magnitudes, teaching fine adjustments.
 
-Because the label is analytic (the negated degradation), no optimiser is needed:
-**OD-02 is resolved — there is no fitting step in v1.** Fitting is only
+Labels are rounded to a configurable step (default 5) before training, so the
+target distribution is learnable without pretending to one-unit precision.
+
+Because the label is analytic (the rounded negated degradation), no optimiser is
+needed: **OD-02 is resolved — there is no fitting step in v1.** Fitting is only
 reintroduced if a future milestone needs true inversion of a clipped
 degradation.
 
@@ -99,6 +108,10 @@ before `03-finetune` freezes them:
 | synthetic magnitude | 20..70 | Large enough to be visible, short of the ranges that clip. |
 | mild magnitude | 3..15 | Subtle, below typical noise in perceived quality. |
 | parameters per degradation | 1..4 | Avoids unrealistic all-at-once distortions. |
+| label step | 5 | Rounded targets are easier to learn; one-unit precision is not meaningful. |
+| min source side | 512 px | The source is the ground truth; tiny images add nothing. |
+| max source clipped fraction | 0.05 | Rejects already-crushed sources before degradation. |
+| min source sharpness | Laplacian variance 20 | Rejects blurry sources. |
 | max newly clipped fraction | 0.02 | Keeps the inverse label meaningful. |
 | max reconstruction RMS | 0.02 of full scale | Drops pairs the executor cannot invert. |
 
@@ -122,7 +135,7 @@ learned variant stays deferred to `07-extensions`.
  "instruction": "...", "answer": "{\"exposure\": 24, ...}",
  "params": {"exposure": 24, ...}, "kind": "synthetic",
  "source": {"photo_id": "...", "photographer": "...", "url": "...",
-            "license": "Unsplash License"},
+            "license": "https://creativecommons.org/publicdomain/zero/1.0/"},
  "degradation": {"exposure": -24, ...}}
 ```
 
@@ -138,14 +151,17 @@ instruction is one fixed string (golden-tested).
 - **Unrealistic degradation** (e.g. -70 on four parameters): capped magnitudes
   and parameter count.
 - **Label collapse**: per-parameter variance is reported before training.
-- **License drift**: the manifest records the license per photo; the Unsplash
-  License is recorded in `architecture.md` §7.
+- **License drift**: the manifest records the per-image license; PD12M is
+  CDLA-Permissive-2.0 over public-domain/CC0 images and is recorded in
+  `architecture.md` §7.
+- **Poor source images**: the fetcher rejects small, dark, clipped, blurry or
+  extreme-aspect images before they become targets.
 - **Non-reproducible output**: per-photo seeds and sorted emission.
 
 ## Open decisions
 
-- **OD-01** — What may be published given the source terms. Resolved 2026-11-24:
-  the Unsplash License permits commercial use and modification; derived
+- **OD-01** — What may be published given the source terms. Resolved 2026-11-25:
+  PD12M is CDLA-Permissive-2.0 over public-domain/CC0 images, so derived
   thumbnails and weights may be published. Provenance is retained.
 - **OD-02** — Optimiser. Resolved 2026-11-24 for constructed pairs: none; labels
   are analytic. Human-edited pairs are evaluation-only in v1, so no fitting step
@@ -167,3 +183,7 @@ pairs): residual median 0.0014, p95 0.015, max accepted 0.019, with 6 pairs
 filtered at the 0.02 limit. The 19 held-out examples re-rendered at full
 resolution have mean ΔE 0.56 and max 2.06. The limits therefore hold on real
 images; they remain unchanged.
+
+After 5-step label rounding (2026-11-25, same 20 photos and seed): 50 examples,
+10 filtered, mean residual 0.00425, mean new clipping 0.00154. Rounding raises
+the filter rate but leaves the accepted residual comfortably below the limit.

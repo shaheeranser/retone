@@ -2,18 +2,20 @@
 
 Depends on `01-executor`.
 
-> **Revised 2026-11-24 (owner decision).** MIT-Adobe FiveK and every comparable
+> **Revised 2026-11-25 (owner decision).** MIT-Adobe FiveK and every comparable
 > human-retouched set (PPR10K, MIT5K-derived sets) is licensed for non-commercial
-> research only, which a hackathon project cannot satisfy. The dataset is built
-> instead from permissively licensed Unsplash photographs with constructed
-> (input, target, label) pairs. See `design.md` §1. The old source and fitting
-> requirements are superseded; their IDs are not reused.
+> research only, which a hackathon project cannot satisfy. Unsplash was rejected
+> the same day because its Terms §8 forbids use in ML/AI datasets and training.
+> The dataset is built from PD12M (public-domain/CC0 images, CDLA-Permissive-2.0
+> dataset) with constructed (input, target, label) pairs; Megalith-10M is the
+> fallback. See `design.md` §1. The old source and fitting requirements are
+> superseded; their IDs are not reused.
 
 ## Source
 
-- **DAT-SRC-1** — THE SYSTEM SHALL build the dataset from photographs covered by
-  the Unsplash License, recording each photo's id, photographer, source URL and
-  license in a source manifest.
+- **DAT-SRC-1** — THE SYSTEM SHALL build the dataset from PD12M public-domain/CC0
+  photographs, recording each photo's id, source, URL, per-image license and
+  dimensions in a source manifest.
 - **DAT-SRC-2** — THE SYSTEM SHALL record the dataset's license terms and the
   per-image provenance before any derived data is published.
 - **DAT-SRC-3** — THE SYSTEM SHALL split photographs deterministically into
@@ -24,6 +26,9 @@ Depends on `01-executor`.
   edit-suffix variants, rotate each edit to the original's orientation, copy
   them into a gitignored work folder and write a provenance manifest. It SHALL
   report rotations, skipped backup directories and unreadable files.
+- **DAT-SRC-5** — THE SYSTEM SHALL reject source images that are too small,
+  badly exposed, heavily clipped, blurry or of extreme aspect ratio before they
+  become targets.
 
 ## Pair construction
 
@@ -44,6 +49,8 @@ Depends on `01-executor`.
   recover parameter labels by fitting, and SHALL record each fit's residual and
   drop fits above the threshold. v1 uses these pairs for evaluation only, so no
   fitting is implemented (OD-05).
+- **DAT-PAIR-7** — THE SYSTEM SHALL round synthetic parameter labels to a
+  configurable step (default 5) before they are written.
 
 ## Augmentation
 

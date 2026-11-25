@@ -9,7 +9,7 @@ separate because it is a narrative run record, not input or output data.
 ```text
 artifacts/data/
   raw/
-    unsplash/        fetched Unsplash corpus plus its source manifest
+    pd12m/           fetched PD12M corpus plus its source manifest
     photos/          owner's unpaired photos
   human/             evaluation-only before/after pairs
     before/          p0001.jpg

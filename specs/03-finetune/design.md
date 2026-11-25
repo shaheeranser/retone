@@ -11,12 +11,11 @@ with a gate that can still change the base model.
 
 ## 2. Model choice
 
-Primary Qwen3.5-2B (natively multimodal, Apache 2.0 per model card); speed
-fallback Qwen3.5-0.8B; tooling fallback Qwen2.5-VL-3B, which Unsloth and
-llama.cpp have supported longer. Qwen3.5 uses a Gated DeltaNet hybrid
-architecture, so Unsloth fine-tuning and llama.cpp vision inference must both be
-confirmed before committing. Qwen3.5 small models are verbose by default, so
-thinking is disabled. Unofficial community distills are avoided.
+Gate order: **Qwen2.5-VL-3B** first, because Unsloth and llama.cpp support it
+well; then **Qwen3.5-2B**, which is smaller but uses a Gated DeltaNet hybrid
+architecture and must prove both fine-tuning and vision inference. Speed
+fallback Qwen3.5-0.8B. Both candidates are Apache-2.0 per their model cards to
+verify. Thinking is disabled. Unofficial community distills are avoided.
 
 Optional distillation: a larger Qwen model generates varied instruction
 phrasings (for `07`), or a 2B model is distilled into 0.8B if speed requires it.
@@ -25,8 +24,9 @@ phrasings (for `07`), or a 2B model is distilled into 0.8B if speed requires it.
 
 QLoRA through Unsloth: rank 16, learning rate 2e-4, 1-2 epochs as the starting
 point. The example format is fixed: 448 px thumbnail (optionally plus a 1:1
-detail crop), a fixed short instruction, and the parameter JSON as integers.
-Checkpoints are pushed to Hugging Face every few hundred steps.
+detail crop), a fixed short instruction, and the parameter JSON as integers
+rounded to a step of 5. Checkpoints are pushed to Hugging Face every few hundred
+steps.
 
 ## 4. Execution model
 
@@ -42,16 +42,17 @@ GGUF conversion and quantization are handled in `04`.
 
 - Prediction collapse to dataset averages: variance check, coarser bins, more
   augmentation.
-- Colab session lost: frequent checkpoints.
-- A100/L4 unavailable: everything sized for a T4.
-- Qwen3.5 unsupported in tooling: gate falls back to Qwen2.5-VL-3B.
+- GPU session lost: frequent checkpoints.
+- Larger GPUs unavailable: everything sized for a T4.
+- Qwen2.5-VL-3B unsupported in tooling: gate falls back to Qwen3.5-2B, then
+  0.8B.
 - Invalid JSON from the model: constrained decoding at inference, schema
   validation and default fallback in `inference`.
 
 ## Open decisions
 
-- **OD-01** — Final base model after the gate (Qwen3.5-2B vs 0.8B vs
-  Qwen2.5-VL-3B).
+- **OD-01** — Final base model after the gate (Qwen2.5-VL-3B vs Qwen3.5-2B vs
+  Qwen3.5-0.8B).
 - **OD-02** — Whether to include the 1:1 detail crop in the prompt (cost vs
   benefit); links to `02` OD-04.
 - **OD-03** — Hyperparameters beyond the starting point (rank, LR, epochs,

@@ -49,7 +49,7 @@ usage above describes the intended tool, not what runs now.
 |---|---|
 | `00-scaffolding` | in progress (dependency licences still being recorded) |
 | `01-executor` | implemented and tested |
-| `02-dataset` | implemented; first real Unsplash build and upload pending |
+| `02-dataset` | implemented; first real PD12M build and upload pending |
 | `03-finetune` | implemented; GPU gate and training run pending |
 | `04-quantize-eval` | human review implemented; quantization and benchmarks pending |
 | `05-cli` | specified |
@@ -100,6 +100,10 @@ bash scripts/train_remote.sh        # add --max-steps 60 for a smoke run
 Validate the dataset and formatter without a GPU or token:
 
 ```sh
+python -m retone.train.fetch_pd12m --limit 5000 --out artifacts/data/raw/pd12m
+python -m retone.train.build_dataset \
+  --manifest artifacts/data/raw/pd12m/manifest.jsonl \
+  --out artifacts/data/processed/synthetic
 python -m retone.train.finetune --examples artifacts/data/processed/examples.jsonl \
   --image-root artifacts/data/processed --dry-run --bin-step 5
 ```
@@ -142,6 +146,7 @@ python -m retone.eval score --examples artifacts/data/processed/examples.jsonl \
 
 MIT, see [`LICENSE`](./LICENSE). The licenses of the base model, training data and
 dependencies are tracked in `specs/architecture.md` section 7. The training corpus
-uses photographs under the Unsplash License, which permits commercial use and
-modification. MIT-Adobe FiveK and comparable research-only retouching datasets
-are not used because their terms forbid this kind of publication.
+is PD12M: public domain/CC0 images under the CDLA-Permissive-2.0 dataset licence,
+with Megalith-10M (MIT dataset, CC0/public-domain Flickr links) as a fallback.
+MIT-Adobe FiveK is research-only, and Unsplash's Terms of Service forbids using
+their images in machine-learning datasets, so neither is used.

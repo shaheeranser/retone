@@ -4,14 +4,16 @@ Depends on `01-executor` and `02-dataset`.
 
 ## Toolchain gate
 
-- **FT-GATE-1** — BEFORE committing to Qwen3.5-2B, THE SYSTEM SHALL demonstrate
-  that a QLoRA step with image inputs runs in Unsloth on Colab.
+- **FT-GATE-1** — BEFORE committing to a base model, THE SYSTEM SHALL demonstrate
+  that a QLoRA step with image inputs runs in Unsloth for Qwen2.5-VL-3B and then
+  for Qwen3.5-2B.
 - **FT-GATE-2** — THE SYSTEM SHALL demonstrate that the model converts to GGUF
   (language model plus `mmproj`) and answers an image prompt in llama.cpp.
 - **FT-GATE-3** — THE SYSTEM SHALL time one inference on the target laptop and
   accept the model only if it takes a few seconds per image.
-- **FT-GATE-4** — WHEN any gate fails, THE SYSTEM SHALL switch to the tooling
-  fallback (Qwen2.5-VL-3B) before further work.
+- **FT-GATE-4** — WHEN any gate fails, THE SYSTEM SHALL record the failure and
+  switch to the next candidate (Qwen3.5-2B, then Qwen3.5-0.8B) before further
+  work.
 
 ## Baseline
 
@@ -21,7 +23,8 @@ Depends on `01-executor` and `02-dataset`.
 ## Training
 
 - **FT-TRN-1** — THE SYSTEM SHALL train on examples of thumbnail plus fixed short
-  instruction to parameter JSON, with thinking disabled and integer values.
+  instruction to parameter JSON, with thinking disabled and integer values
+  rounded to a step of 5.
 - **FT-TRN-2** — THE SYSTEM SHALL fine-tune with QLoRA via Unsloth, starting
   from LoRA rank 16, learning rate 2e-4, 1-2 epochs.
 - **FT-TRN-3** — THE SYSTEM SHALL push checkpoints to Hugging Face every few

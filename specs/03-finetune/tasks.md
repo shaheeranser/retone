@@ -4,13 +4,13 @@ Read [`design.md`](./design.md) first.
 
 ## 1. Toolchain gate (do first)
 
-- [ ] **T-1.1** — Run one QLoRA step on Qwen3.5-2B with image inputs in Unsloth
-      on Colab. *(FT-GATE-1)*
+- [ ] **T-1.1** — Run one QLoRA step with image inputs on Qwen2.5-VL-3B, then on
+      Qwen3.5-2B, in Unsloth on a GPU host. *(FT-GATE-1)*
 - [ ] **T-1.2** — Convert to GGUF plus `mmproj` and run with an image in
       llama.cpp. *(FT-GATE-2)*
 - [ ] **T-1.3** — Time one inference on the target laptop. *(FT-GATE-3)*
-- [ ] **T-1.4** — Record the gate outcome in the run report; switch base model if
-      any step failed. *(FT-GATE-4; OD-01)*
+- [ ] **T-1.4** — Record the gate outcome for both candidates in the run report
+      and lock the base model. *(FT-GATE-4; OD-01)*
 
 ## 2. Baseline
 
