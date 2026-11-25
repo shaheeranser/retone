@@ -240,7 +240,16 @@ def train_once(
     )
     trainer_kwargs[tokenizer_keyword] = loaded.tokenizer
     trainer = SFTTrainer(**trainer_kwargs)
-    trainer.train(resume_from_checkpoint=str(checkpoint) if checkpoint else None)
+    output = trainer.train(resume_from_checkpoint=str(checkpoint) if checkpoint else None)
+    metrics = getattr(output, "metrics", {}) or {}
+    runtime = metrics.get("train_runtime")
+    steps_per_second = metrics.get("train_steps_per_second")
+    if runtime is not None:
+        print(
+            f"training metrics: runtime={runtime:.1f}s, "
+            f"steps_per_second={steps_per_second}, steps={metrics.get('train_steps')}",
+            file=sys.stderr,
+        )
 
     loaded.model.push_to_hub(settings.output_repo, private=settings.private, token=token)
     merged_dir = settings.output_dir / "merged"
