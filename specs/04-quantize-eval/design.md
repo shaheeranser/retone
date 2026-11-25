@@ -44,15 +44,15 @@ is stated in the report, not enforced by a test.
 
 ## 7. Human-edited evaluation
 
-The owner's 23 before/after edits are a separate held-out set in `data/human/`
-(see `../data-layout.md`). They are never trained on and no labels are fitted.
-For each pair, a prediction file supplies parameters; the executor renders them
-on the full-resolution before image, and CIEDE2000 to the human after image is
-recorded as a diagnostic.
+The owner's 23 before/after edits are a separate held-out set in
+`artifacts/data/human/` (see `../data-layout.md`). They are never trained on and
+no labels are fitted. For each pair, a prediction file supplies parameters; the
+executor renders them on the full-resolution before image, and CIEDE2000 to the
+human after image is recorded as a diagnostic.
 
-The review bundle under `artifacts/human/<run>/` keeps `original/`, `model/` and
-`reference/` side by side with `review.html`, `ratings.csv`, `metrics.json` and
-`manifest.json`. When two models are compared, their columns are labelled A/B in
+The review bundle under `artifacts/eval/human/<run>/` keeps `original/`, `model/`
+and `reference/` side by side with `review.html`, `ratings.csv`, `metrics.json`
+and `manifest.json`. When two models are compared, their columns are labelled A/B in
 a seeded order and `manifest.json` holds the mapping, so the reviewer does not
 judge the model by name.
 

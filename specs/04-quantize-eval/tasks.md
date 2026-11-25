@@ -31,9 +31,9 @@ Read [`design.md`](./design.md) first.
 
 ## 5. Human-edited evaluation
 
-- [x] **T-5.1** — Load `data/human/pairs.jsonl`, render predictions on the
-      full-resolution before image and score ΔE to the human after. *(QE-HUM-1,
-      QE-HUM-2; OD-05)*
+- [x] **T-5.1** — Load `artifacts/data/human/pairs.jsonl`, render predictions on
+      the full-resolution before image and score ΔE to the human after.
+      *(QE-HUM-1, QE-HUM-2; OD-05)*
 - [x] **T-5.2** — Build the HTML/CSV review bundle with original, model and
       reference folders and blind A/B labels. *(QE-HUM-3, QE-HUM-5)*
 - [x] **T-5.3** — Wire the review command into `python -m retone.eval`.

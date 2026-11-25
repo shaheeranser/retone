@@ -46,8 +46,8 @@ It accepts `(edit)`, `(edited)`, a software suffix such as
 `(edited_lightroom)`, and a numeric variant written as `(edit)2`,
 `(edited)(2)` or `(edited 2)`. Multiple edited versions share one original and
 become separate pairs. Originals and edits are copied into separate `before/`
-and `after/` folders under the gitignored `data/human/`, with a `pairs.jsonl`
-manifest; nothing from the owner's library is published. See
+and `after/` folders under the gitignored `artifacts/data/human/`, with a
+`pairs.jsonl` manifest; nothing from the owner's library is published. See
 [`../data-layout.md`](../data-layout.md).
 
 These edits carry no parameter values, so v1 uses them as an **evaluation set

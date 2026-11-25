@@ -100,15 +100,15 @@ bash scripts/train_remote.sh        # add --max-steps 60 for a smoke run
 Validate the dataset and formatter without a GPU or token:
 
 ```sh
-python -m retone.train.finetune --examples data/processed/examples.jsonl \
-  --image-root data/processed --dry-run --bin-step 5
+python -m retone.train.finetune --examples artifacts/data/processed/examples.jsonl \
+  --image-root artifacts/data/processed --dry-run --bin-step 5
 ```
 
 Private before/after edits from the owner's library are collected into
 gitignored storage, never published:
 
 ```sh
-python -m retone.train.collect_pairs --source ~/pictures --dest data/human
+python -m retone.train.collect_pairs --source ~/pictures --dest artifacts/data/human
 ```
 
 Directories matching `_*` (backup or corrupt folders) are skipped by default;
@@ -120,9 +120,9 @@ Build a human-review bundle from prediction files:
 
 ```sh
 python -m retone.eval review \
-  --pairs data/human/pairs.jsonl \
+  --pairs artifacts/data/human/pairs.jsonl \
   --prediction tuned=predictions-tuned.jsonl \
-  --out artifacts/human/2026-11-25
+  --out artifacts/eval/human/2026-11-25
 ```
 
 Open `review.html`, then fill `ratings.csv`. ΔE in `metrics.json` is a diagnostic;
@@ -134,8 +134,8 @@ Checkpoints, the adapter and the merged model are pushed to
 are scored on the held-out split with:
 
 ```sh
-python -m retone.eval score --examples data/processed/examples.jsonl \
-  --source-paths data/processed/source_paths.json --predictions predictions.jsonl
+python -m retone.eval score --examples artifacts/data/processed/examples.jsonl \
+  --source-paths artifacts/data/processed/source_paths.json --predictions predictions.jsonl
 ```
 
 ## License

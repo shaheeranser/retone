@@ -16,10 +16,9 @@ dist/
 build/
 *.egg-info/
 
-# models, local inputs and generated artifacts never enter git
-# anchored to the repo root so src/retone/data and tests/data stay tracked
+# models and the single local work root never enter git
+# anchored so nested source directories stay tracked
 /models/
-/data/
 /artifacts/
 *.gguf
 *.safetensors

@@ -1,16 +1,16 @@
 # Data and artifacts layout
 
-This file is the contract for everything the repository reads and writes outside
-`src/`, `tests/`, `specs/` and `reports/`. Both trees below are gitignored: no
-input photo, derived dataset, render or review sheet is ever committed.
+Everything local lives under one gitignored root, `artifacts/`, split into
+`data/` for inputs and `eval/` for generated evaluation output. `reports/` is
+separate because it is a narrative run record, not input or output data.
 
-## Inputs: `data/`
+## Inputs: `artifacts/data/`
 
 ```text
-data/
+artifacts/data/
   raw/
     unsplash/        fetched Unsplash corpus plus its source manifest
-    photos/          owner's unpaired photos (formerly eval/images)
+    photos/          owner's unpaired photos
   human/             evaluation-only before/after pairs
     before/          p0001.jpg
     after/           p0001.png when rotated losslessly, else p0001.jpg
@@ -21,24 +21,24 @@ data/
   cache/             downloads and transient files
 ```
 
-- `data/` is local input only. It is fully ignored by git.
-- Small test fixtures live in `tests/fixtures/`, never in `data/`.
+- `artifacts/data/` is local input only.
+- Small test fixtures live in `tests/fixtures/`, never here.
 - Provenance for published corpora is recorded in the manifests; the private
   owner pairs are never published.
-- `data/human/` is **evaluation only** in v1: no labels are fitted and nothing
-  from it enters training. If that changes, the milestone design must reopen
-  OD-05 first.
+- `artifacts/data/human/` is **evaluation only** in v1: no labels are fitted and
+  nothing from it enters training. If that changes, the milestone design must
+  reopen OD-05 first.
 
-## Outputs: `artifacts/`
+## Outputs: `artifacts/eval/`
 
 ```text
-artifacts/
+artifacts/eval/
   executor/          milestone 01 renders, contact sheets, params_*.json
   human/
     <run>/           one review bundle, named by date or run id
-      original/      hardlinks or copies of data/human/before
+      original/      hardlinks or copies of artifacts/data/human/before
       model/         rendered model output, one file per pair and model label
-      reference/     hardlinks or copies of data/human/after
+      reference/     hardlinks or copies of artifacts/data/human/after
       review.html    side-by-side review page
       ratings.csv    human rating template
       metrics.json   ΔE diagnostics per pair and aggregate
@@ -46,7 +46,7 @@ artifacts/
   synthetic/         future model-versus-target sheets
 ```
 
-- `artifacts/` is generated output only. It is fully ignored by git.
+- `artifacts/eval/` is generated output only.
 - A review bundle is self-contained: `original/`, `model/` and `reference/`
   sit beside each other inside it.
 - Runs are immutable once reviewed; a new model or prediction set gets a new
@@ -54,25 +54,24 @@ artifacts/
 
 ## Ignore rules
 
-`.gitignore` ignores `/data/` and `/artifacts/` at the repository root. The
-leading slash matters: an unanchored `data/` would also ignore
-`src/retone/data/` and `tests/data/`. There are no tracked files in either
-top-level tree, so a private photo cannot be committed by mistake and
-`git status` stays clean.
+`.gitignore` ignores `/artifacts/` as one root directory, along with
+`/reports/` and `/.commandcode/`. The leading slash matters: an unanchored
+`artifacts/` pattern would also match a nested directory with that name. There is
+no separate root `data/` directory.
 
 ## Lifecycle
 
-1. Collect raw inputs under `data/raw/` or `data/human/`.
-2. Build training examples under `data/processed/` and upload them to Hugging
-   Face (never commit them).
-3. Render evaluation outputs under `artifacts/`.
+1. Collect raw inputs under `artifacts/data/raw/` or `artifacts/data/human/`.
+2. Build training examples under `artifacts/data/processed/` and upload them to
+   Hugging Face (never commit them).
+3. Render evaluation outputs under `artifacts/eval/`.
 4. Record what was run and what was concluded under `reports/` (also ignored).
 5. Keep `specs/` as the committed design record.
 
 ## Invariants
 
 1. No binary input, derived dataset, model, render or review bundle is committed.
-2. `data/human/` is evaluation-only in v1; no leakage into training.
+2. `artifacts/data/human/` is evaluation-only in v1; no leakage into training.
 3. Human review is the acceptance signal; ΔE is a diagnostic, not a gate.
 4. Collector-managed folders contain only files referenced by the current
    manifest; stale outputs are pruned.
