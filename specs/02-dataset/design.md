@@ -45,14 +45,18 @@ set. The collector pairs `name.ext` with `name(edit...).ext` in the same folder.
 It accepts `(edit)`, `(edited)`, a software suffix such as
 `(edited_lightroom)`, and a numeric variant written as `(edit)2`,
 `(edited)(2)` or `(edited 2)`. Multiple edited versions share one original and
-become separate pairs. Pairs are copied to the gitignored `data/raw/pairs/` with
-a `pairs.jsonl` manifest; nothing from the owner's library is published.
+become separate pairs. Originals and edits are copied into separate `before/`
+and `after/` folders under the gitignored `data/human/`, with a `pairs.jsonl`
+manifest; nothing from the owner's library is published. See
+[`../data-layout.md`](../data-layout.md).
 
-These edits carry no parameter values, so they are directly usable as a
-verification set (render the model's parameters on the before image and compare
-to the after image) but not yet as training labels. Training on them requires
-label recovery (OD-05). A third option is distilling advice from a larger model;
-it is deferred until the fitting path exists and its terms are checked.
+These edits carry no parameter values, so v1 uses them as an **evaluation set
+only**: the model predicts parameters from the before thumbnail, the executor
+renders them on the full-resolution before image, and human review judges the
+result. No labels are fitted and nothing from this set enters training. Label
+recovery and distillation are deferred; if these pairs ever enter training,
+OD-05 reopens first. Mathematical ΔE to the human edit is reported as a
+diagnostic, not as the acceptance signal.
 
 The original is the orientation reference. When an edit's pixel dimensions are on
 the other axis, the collector rotates it back, choosing 90 or 270 degrees by
@@ -144,16 +148,15 @@ instruction is one fixed string (golden-tested).
   the Unsplash License permits commercial use and modification; derived
   thumbnails and weights may be published. Provenance is retained.
 - **OD-02** — Optimiser. Resolved 2026-11-24 for constructed pairs: none; labels
-  are analytic. Reopened for human-edited pairs, which need label recovery
-  (OD-05).
+  are analytic. Human-edited pairs are evaluation-only in v1, so no fitting step
+  exists; OD-05 reopens only if they ever enter training.
 - **OD-03** — Residual threshold and augmentation ratio. Resolved 2026-11-24 with
   the table in §4; retunable until `03-finetune` starts.
 - **OD-04** — Detail crop. Resolved 2026-11-24: thumbnail only in v1.
-- **OD-05** — Label recovery for human-edited pairs. Not decided. Candidate:
-  bounded coordinate descent over the integer schema, minimising a colour
-  difference on 256 px copies and dropping fits whose residual is too high.
-  Alternatives are verification-only use (no labels) and distillation from a
-  larger model. Decide before these pairs enter training.
+- **OD-05** — Label recovery for human-edited pairs. Resolved 2026-11-24: not
+  needed in v1; the pairs are evaluation-only and no labels are fitted. Reopen
+  if they enter training; candidate methods remain bounded coordinate descent or
+  distillation from a larger model.
 
 The thresholds in §4 were set from the inversion guard and then checked against
 measured residuals. Changing them after `03` training starts requires

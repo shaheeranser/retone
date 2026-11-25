@@ -58,6 +58,8 @@ src/retone/cli/        argument parsing, command handlers, rendering, wiring
 tests/                 mirrors src/retone/
 specs/                 committed design record
 reports/               gitignored run reports
+data/                  gitignored local inputs (corpora, human pairs, processed)
+artifacts/             gitignored generated renders, review bundles and metrics
 ```
 
 Dependency direction:
@@ -97,10 +99,11 @@ training scripts make no host-specific assumption. The hackathon submission
 requires a public model link, so what becomes public is decided in
 `06-submission` OD-01.
 
-An optional private set of the owner's own before/after edits may complement or
-verify the corpus. It is collected into `data/raw/pairs/` (gitignored), never
-published, and needs fitted labels before training can use it; until then it is
-a verification set.
+An optional private set of the owner's own before/after edits is collected into
+`data/human/` (gitignored). It is **evaluation only** in v1: no labels are fitted
+and nothing from it enters training. Model renders, review HTML, ratings and
+diagnostics are written under `artifacts/human/<run>/`, never committed. See
+[`data-layout.md`](./data-layout.md).
 
 | Artifact | Approx. size (2B) | Stored on |
 |---|---|---|
@@ -126,7 +129,7 @@ date and source.
 | llama.cpp | inference | to record | to verify |
 | OpenCV, NumPy | executor | to record | to verify |
 | Unsplash photos | training corpus | [Unsplash License](https://unsplash.com/license): irrevocable, worldwide, free commercial use, modification allowed; bars compiling into a competing stock service | verified 2026-11-24 |
-| Owner's own before/after edits | optional verification or training | owner-owned; copied only to gitignored `data/raw/pairs/` | recorded 2026-11-24 |
+| Owner's own before/after edits | evaluation only in v1 | owner-owned; copied only to gitignored `data/human/` | recorded 2026-11-24 |
 | `datasets`, `huggingface-hub`, Pillow (optional upload extra) | dataset upload | Apache-2.0, Apache-2.0, HPND | to verify |
 | Unsloth, TRL, transformers, PEFT, accelerate (optional train extra) | fine-tuning | Apache-2.0 per project metadata | to verify |
 | lm-format-enforcer (optional train extra) | constrained JSON generation | MIT | to verify |
@@ -141,3 +144,9 @@ Q4_K_M, each with mean delta-E, parameter MAE, laptop latency and peak RAM. A
 thumbnail-validity check reports the mean delta-E between rendering from
 thumbnail-sized and full-resolution measurements. Qwen time and full-resolution
 render time are reported separately on a 24 MP photo.
+
+The owner's human-edited pairs are an additional held-out set. There, a model
+prediction is applied to the full-resolution before image, delta-E to the human
+after image is reported as a diagnostic, and a generated HTML/CSV review bundle
+records human judgement. Human review is the acceptance signal for whether the
+result looks better; delta-E alone is not.

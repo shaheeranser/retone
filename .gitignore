@@ -1,8 +1,8 @@
 # working records, not committed (see specs/agent-practices.md section 5)
-reports/
+/reports/
 
 # local agent tooling state
-.commandcode/
+/.commandcode/
 
 # python
 __pycache__/
@@ -16,14 +16,12 @@ dist/
 build/
 *.egg-info/
 
-# models, data and caches stay on Hugging Face, never in git
-models/
-data/raw/
-data/cache/
+# models, local inputs and generated artifacts never enter git
+# anchored to the repo root so src/retone/data and tests/data stay tracked
+/models/
+/data/
+/artifacts/
 *.gguf
 *.safetensors
 .cache/
 .env
-
-# private validation photos and renders; anchored so src/retone/eval stays tracked
-/eval/

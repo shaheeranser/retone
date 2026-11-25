@@ -15,7 +15,7 @@ Depends on `01-executor`, `02-dataset`, `03-finetune`.
 - **QE-MET-1** — THE SYSTEM SHALL compute mean CIEDE2000 ΔE against the held-out
   target at full resolution over the test split.
 - **QE-MET-2** — THE SYSTEM SHALL compute per-parameter mean absolute error
-  against fitted parameters.
+  against the training labels.
 - **QE-MET-3** — THE SYSTEM SHALL use the `01` executor for every render.
 
 ## Benchmark
@@ -33,3 +33,19 @@ Depends on `01-executor`, `02-dataset`, `03-finetune`.
 - **QE-THM-1** — THE SYSTEM SHALL fit parameters on the full-resolution image
   and on its 448 px copy, apply both to the full-resolution image, and report
   the mean ΔE between the two results.
+
+## Human-edited evaluation
+
+- **QE-HUM-1** — THE SYSTEM SHALL treat the owner's human-edited before/after
+  pairs as evaluation only, SHALL NOT fit labels for them, and SHALL NOT train
+  on them in v1.
+- **QE-HUM-2** — THE SYSTEM SHALL apply predicted parameters to the
+  full-resolution before image and report CIEDE2000 ΔE to the human after image,
+  per pair and in aggregate, as a diagnostic.
+- **QE-HUM-3** — THE SYSTEM SHALL generate a self-contained review bundle with
+  the original, the human reference and each model render side by side, plus
+  `review.html`, `ratings.csv`, `metrics.json` and `manifest.json`.
+- **QE-HUM-4** — HUMAN review SHALL be the acceptance signal for whether output
+  looks better; automated ΔE SHALL NOT be the sole criterion.
+- **QE-HUM-5** — WHEN more than one model is reviewed, THE SYSTEM SHALL blind the
+  display labels and record the mapping in the bundle manifest.

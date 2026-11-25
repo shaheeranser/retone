@@ -42,8 +42,8 @@ Depends on `01-executor`.
   because sharpening cannot be inverted by the executor.
 - **DAT-PAIR-6** — WHEN human-edited pairs are used for training, THE SYSTEM MAY
   recover parameter labels by fitting, and SHALL record each fit's residual and
-  drop fits above the threshold. The fitting method is OD-05 and is not part of
-  this milestone's implementation.
+  drop fits above the threshold. v1 uses these pairs for evaluation only, so no
+  fitting is implemented (OD-05).
 
 ## Augmentation
 

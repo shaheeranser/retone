@@ -28,8 +28,8 @@ Read [`design.md`](./design.md) first.
       First real run (20 owner photos, 60 pairs): median 0.0014, p95 0.015,
       max accepted 0.019, 6 pairs filtered at the 0.02 limit. *(DAT-PAIR-4;
       OD-03)*
-- [ ] **T-2.6** — Recover labels for the human-edited pairs and filter by
-      residual. Method is OD-05. *(DAT-PAIR-6)*
+- [ ] **T-2.6** — Deferred: human-edited pairs are evaluation-only in v1, so no
+      labels are fitted. Reopens if they enter training. *(DAT-PAIR-6; OD-05)*
 
 ## 3. Sharpening
 
