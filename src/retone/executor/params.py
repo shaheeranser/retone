@@ -24,6 +24,15 @@ class Params:
     def as_dict(self) -> dict[str, int]:
         return {field.name: getattr(self, field.name) for field in fields(self)}
 
+    def coarsen(self, step: int) -> Params:
+        """Round every value to a multiple of `step`, clamped to the schema."""
+        if step < 1:
+            raise ValueError(f"coarsen step must be positive, got {step}")
+        values = {
+            spec.name: spec.clamp(round(getattr(self, spec.name) / step) * step) for spec in SCHEMA
+        }
+        return Params(**values)
+
 
 @dataclass(frozen=True)
 class ParsedParams:

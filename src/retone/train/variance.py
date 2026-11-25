@@ -15,12 +15,7 @@ DEFAULT_MIN_STD = 1.0
 
 def coarsen_params(params: Params, step: int) -> Params:
     """Round every parameter to a multiple of `step`, clamped to the schema."""
-    if step < 1:
-        raise ValueError(f"coarsen step must be positive, got {step}")
-    values = {
-        spec.name: spec.clamp(round(getattr(params, spec.name) / step) * step) for spec in SCHEMA
-    }
-    return Params(**values)
+    return params.coarsen(step)
 
 
 def prediction_variance(predictions: Sequence[Params]) -> dict[str, float]:

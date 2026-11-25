@@ -46,8 +46,8 @@ def test_record_golden(update_golden: bool) -> None:
         source={
             "photo_id": "photo",
             "photographer": "Tester",
-            "url": "https://unsplash.com/photos/photo",
-            "license": "Unsplash License",
+            "url": "https://example.org/photo",
+            "license": "CC0-1.0",
         },
         degradation=Params(
             exposure=-24,

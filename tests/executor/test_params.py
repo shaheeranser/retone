@@ -15,6 +15,18 @@ def test_params_default_to_schema_defaults() -> None:
     assert Params().as_dict() == {spec.name: spec.default for spec in SCHEMA}
 
 
+def test_coarsen_rounds_and_clamps() -> None:
+    coarse = Params(exposure=23, contrast=-13, sharpen_amount=97).coarsen(5)
+    assert coarse.exposure == 25
+    assert coarse.contrast == -15
+    assert coarse.sharpen_amount == 95
+
+
+def test_coarsen_rejects_invalid_step() -> None:
+    with pytest.raises(ValueError):
+        Params().coarsen(0)
+
+
 @pytest.mark.parametrize(
     ("raw", "expected", "clamped"),
     [

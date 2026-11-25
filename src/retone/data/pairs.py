@@ -35,6 +35,7 @@ class PairPolicy:
     synthetic_magnitude: Magnitude = field(default_factory=lambda: Magnitude(20, 70))
     mild_magnitude: Magnitude = field(default_factory=lambda: Magnitude(3, 15))
     max_params: int = 4
+    label_step: int = 5
     max_newly_clipped: float = 0.02
     max_residual: float = 0.02
     max_attempts: int = 12
@@ -43,6 +44,8 @@ class PairPolicy:
         weights = (self.identity_weight, self.synthetic_weight, self.mild_weight)
         if any(weight < 0 for weight in weights) or abs(sum(weights) - 1.0) > 1e-9:
             raise ValueError(f"pair weights must be non-negative and sum to 1, got {weights}")
+        if not 1 <= self.label_step <= 100:
+            raise ValueError(f"label_step must be in 1..100, got {self.label_step}")
         if not 0.0 <= self.max_newly_clipped <= 1.0:
             raise ValueError(f"max_newly_clipped must be in [0, 1], got {self.max_newly_clipped}")
         if self.max_attempts < 1:
@@ -86,7 +89,7 @@ def _degraded_pair(
             clipped = newly_clipped_fraction(target, input_image)
             if clipped > policy.max_newly_clipped:
                 continue
-            label = invert(degradation)
+            label = invert(degradation).coarsen(policy.label_step)
             corrected = apply(input_image, label)
             return Pair(
                 input_image=input_image,
@@ -99,7 +102,7 @@ def _degraded_pair(
     # Even an extreme image keeps a pair; the caller filters it if the guards fail.
     degradation = sample_params(rng, Magnitude(1, 3), policy.max_params)
     input_image = apply(target, degradation)
-    label = invert(degradation)
+    label = invert(degradation).coarsen(policy.label_step)
     return Pair(
         input_image=input_image,
         label=label,

@@ -23,8 +23,8 @@ def _corpus(tmp_path: Path, count: int = 6) -> Path:
                     "photo_id": photo_id,
                     "file": filename,
                     "photographer": "Tester",
-                    "url": f"https://unsplash.com/photos/{photo_id}",
-                    "license": "Unsplash License",
+                    "url": f"https://example.org/{photo_id}",
+                    "license": "CC0-1.0",
                 }
             )
         )
@@ -80,7 +80,7 @@ def test_examples_reference_existing_images(tmp_path: Path) -> None:
     for row in rows:
         assert (tmp_path / "out" / row["image"]).is_file()
         assert json.loads(row["answer"]) == row["params"]
-        assert row["source"]["license"] == "Unsplash License"
+        assert row["source"]["license"] == "CC0-1.0"
         assert row["residual"] >= 0.0
 
 

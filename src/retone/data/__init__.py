@@ -1,4 +1,4 @@
-"""Dataset preparation: Unsplash corpus loading, pair construction and examples."""
+"""Dataset preparation: source corpus loading, pair construction and examples."""
 
 from retone.data.build import BuildConfig, BuildSummary, build_dataset
 from retone.data.collect import (

@@ -205,6 +205,7 @@ def _config_dict(config: BuildConfig) -> dict[str, Any]:
             ],
             "mild_magnitude": [policy.mild_magnitude.low, policy.mild_magnitude.high],
             "max_params": policy.max_params,
+            "label_step": policy.label_step,
             "max_newly_clipped": policy.max_newly_clipped,
             "max_residual": policy.max_residual,
             "max_attempts": policy.max_attempts,

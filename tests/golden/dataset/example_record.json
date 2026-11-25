@@ -28,10 +28,10 @@
   },
   "residual": 0.0012,
   "source": {
-    "license": "Unsplash License",
+    "license": "CC0-1.0",
     "photo_id": "photo",
     "photographer": "Tester",
-    "url": "https://unsplash.com/photos/photo"
+    "url": "https://example.org/photo"
   },
   "split": "train"
 }

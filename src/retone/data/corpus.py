@@ -1,4 +1,4 @@
-"""The Unsplash source manifest: provenance per photo and a deterministic split."""
+"""The photo source manifest: provenance per photo and a deterministic split."""
 
 from __future__ import annotations
 
@@ -11,7 +11,6 @@ from typing import Any
 from retone.data.errors import DatasetError
 
 MANIFEST_FIELDS = ("photo_id", "file", "photographer", "url", "license")
-UNSPLASH_LICENSE = "Unsplash License"
 
 
 @dataclass(frozen=True)

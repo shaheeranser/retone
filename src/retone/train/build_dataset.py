@@ -1,4 +1,4 @@
-"""Colab entry point: build the training dataset from an Unsplash source manifest."""
+"""Entry point: build the training dataset from a photo source manifest."""
 
 from __future__ import annotations
 

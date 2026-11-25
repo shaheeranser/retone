@@ -13,6 +13,7 @@ TINY_POLICY = PairPolicy(
     synthetic_weight=1.0,
     mild_weight=0.0,
     synthetic_magnitude=Magnitude(1, 3),
+    label_step=1,
     max_residual=1.0,
 )
 
@@ -34,6 +35,19 @@ def test_synthetic_label_is_the_inverse_degradation() -> None:
         assert label[name] == -value
     assert label["sharpen_amount"] == 0
     assert pair.kind is PairKind.SYNTHETIC
+
+
+def test_labels_round_to_the_policy_step() -> None:
+    policy = PairPolicy(
+        identity_weight=0.0,
+        synthetic_weight=1.0,
+        mild_weight=0.0,
+        synthetic_magnitude=Magnitude(20, 30),
+        label_step=5,
+        max_residual=1.0,
+    )
+    pair = build_pair(make_image(), np.random.default_rng(2), PairKind.SYNTHETIC, policy)
+    assert all(value % 5 == 0 for value in pair.label.as_dict().values())
 
 
 def test_pairs_are_reproducible_for_a_seed() -> None:

@@ -23,8 +23,8 @@ def _manifest(tmp_path: Path, ids: list[str]) -> Path:
                     "photo_id": photo_id,
                     "file": filename,
                     "photographer": "Tester",
-                    "url": f"https://unsplash.com/photos/{photo_id}",
-                    "license": "Unsplash License",
+                    "url": f"https://example.org/{photo_id}",
+                    "license": "CC0-1.0",
                 }
             )
         )
@@ -38,7 +38,7 @@ def test_manifest_round_trip(tmp_path: Path) -> None:
     items = load_manifest(path)
     assert [item.photo_id for item in items] == ["one", "two"]
     assert items[0].path == tmp_path / "one.png"
-    assert items[0].license == "Unsplash License"
+    assert items[0].license == "CC0-1.0"
 
 
 def test_bad_entries_are_reported_together(tmp_path: Path) -> None:
