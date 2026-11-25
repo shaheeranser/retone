@@ -88,6 +88,7 @@ def test_eval_cli_scores_prediction_files(
 
     code = eval_main(
         [
+            "score",
             "--examples",
             str(examples),
             "--source-paths",

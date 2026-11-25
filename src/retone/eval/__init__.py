@@ -2,15 +2,28 @@
 
 from retone.eval.ceiling import CeilingResult, reconstruction_residual
 from retone.eval.delta_e import ciede2000_from_lab, mean_delta_e, srgb_to_lab
+from retone.eval.human import (
+    HumanPair,
+    HumanReport,
+    load_human_pairs,
+    render_predictions,
+)
 from retone.eval.predictions import PredictionScore, parameter_mae, score_predictions
+from retone.eval.review import ReviewBundle, build_review_bundle
 
 __all__ = [
     "CeilingResult",
+    "HumanPair",
+    "HumanReport",
     "PredictionScore",
+    "ReviewBundle",
+    "build_review_bundle",
     "ciede2000_from_lab",
+    "load_human_pairs",
     "mean_delta_e",
     "parameter_mae",
     "reconstruction_residual",
+    "render_predictions",
     "score_predictions",
     "srgb_to_lab",
 ]

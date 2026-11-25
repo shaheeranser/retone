@@ -24,7 +24,7 @@ no AI denoise, upscaling or inpainting, so every change is visible and
 reversible, and the original file is never touched.
 
 It runs on a weak laptop. The target is an Intel i7-1185G7 with 16 GB RAM and no
-CUDA, through llama.cpp. Training happens on Colab; the laptop only runs the
+CUDA, through llama.cpp. Training happens on a GPU host; the laptop only runs the
 finished model.
 
 ## Intended usage
@@ -51,7 +51,7 @@ usage above describes the intended tool, not what runs now.
 | `01-executor` | implemented and tested |
 | `02-dataset` | implemented; first real Unsplash build and upload pending |
 | `03-finetune` | implemented; GPU gate and training run pending |
-| `04-quantize-eval` | specified |
+| `04-quantize-eval` | human review implemented; quantization and benchmarks pending |
 | `05-cli` | specified |
 | `06-submission` | specified |
 | `07-extensions` (GUI, sliders, learned sharpening) | deferred |
@@ -68,7 +68,8 @@ interfaces, open decisions) and `tasks.md`. Read
 [`specs/style-guide.md`](./specs/style-guide.md) and
 [`specs/agent-practices.md`](./specs/agent-practices.md). [`AGENTS.md`](./AGENTS.md)
 is the entry point for AI coding agents, and [`CONTRIBUTING.md`](./CONTRIBUTING.md)
-covers contributing.
+covers contributing. [`specs/data-layout.md`](./specs/data-layout.md) defines the
+private input and generated-output trees.
 
 ## Development
 
@@ -107,19 +108,33 @@ Private before/after edits from the owner's library are collected into
 gitignored storage, never published:
 
 ```sh
-python -m retone.train.collect_pairs --source ~/pictures --dest data/raw/pairs
+python -m retone.train.collect_pairs --source ~/pictures --dest data/human
 ```
 
 Directories matching `_*` (backup or corrupt folders) are skipped by default;
 repeat `--exclude` to choose other patterns. Edits are rotated back to the
-original's orientation.
+original's orientation. These pairs are **evaluation only**: no labels are fitted
+and they never enter training.
+
+Build a human-review bundle from prediction files:
+
+```sh
+python -m retone.eval review \
+  --pairs data/human/pairs.jsonl \
+  --prediction tuned=predictions-tuned.jsonl \
+  --out artifacts/human/2026-11-25
+```
+
+Open `review.html`, then fill `ratings.csv`. ΔE in `metrics.json` is a diagnostic;
+human judgement is the acceptance signal. See
+[`specs/data-layout.md`](./specs/data-layout.md).
 
 Checkpoints, the adapter and the merged model are pushed to
 `$OUTPUT_REPO` and `$OUTPUT_REPO-merged`. Baseline and fine-tuned predictions
 are scored on the held-out split with:
 
 ```sh
-python -m retone.eval --examples data/processed/examples.jsonl \
+python -m retone.eval score --examples data/processed/examples.jsonl \
   --source-paths data/processed/source_paths.json --predictions predictions.jsonl
 ```
 
