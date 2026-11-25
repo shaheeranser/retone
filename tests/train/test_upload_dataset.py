@@ -41,5 +41,6 @@ def test_rows_carry_the_image_path_and_metadata(tmp_path: Path) -> None:
 def test_main_requires_a_token_from_the_environment(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    monkeypatch.chdir(tmp_path)
     monkeypatch.delenv("HF_TOKEN", raising=False)
     assert main(["--examples", str(tmp_path), "--image-root", str(tmp_path), "--repo-id", "x"]) == 2

@@ -53,12 +53,14 @@ def test_dry_run_validates_local_examples(
 
 
 def test_training_requires_a_token(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.chdir(tmp_path)
     monkeypatch.delenv("HF_TOKEN", raising=False)
     examples = _corpus(tmp_path)
     assert main(["--examples", str(examples), "--output-repo", "someone/model"]) == 2
 
 
 def test_training_requires_an_output_repo(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.chdir(tmp_path)
     monkeypatch.setenv("HF_TOKEN", "token")
     examples = _corpus(tmp_path)
     assert main(["--examples", str(examples)]) == 2

@@ -130,8 +130,15 @@ def train_once(
     settings: TrainSettings, records: Sequence[TrainingExample], token: str
 ) -> LoadedModel:
     """Train one QLoRA run, push checkpoints, then push the adapter and merged model."""
+    from huggingface_hub import HfApi
     from trl import SFTConfig, SFTTrainer
     from unsloth.trainer import UnslothVisionDataCollator
+
+    api = HfApi(token=token)
+    api.create_repo(repo_id=settings.output_repo, private=settings.private, exist_ok=True)
+    api.create_repo(
+        repo_id=f"{settings.output_repo}-merged", private=settings.private, exist_ok=True
+    )
 
     loaded = load_model(
         settings.model_name,

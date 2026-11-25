@@ -6,13 +6,27 @@
 set -euo pipefail
 
 REPO_ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+# Fill only variables that are not already set, so Colab/Kaggle secrets win.
 load_env() {
-  if [ -f "$1" ]; then
-    set -a
-    # shellcheck disable=SC1090
-    . "$1"
-    set +a
-  fi
+  local file="$1" line key value
+  [ -f "$file" ] || return 0
+  while IFS= read -r line || [ -n "$line" ]; do
+    case "$line" in
+      ''|'#'*) continue ;;
+    esac
+    line="${line#export }"
+    key="${line%%=*}"
+    value="${line#*=}"
+    key=$(printf '%s' "$key" | tr -d '[:space:]')
+    [ -n "$key" ] || continue
+    case "$value" in
+      \"*\") value="${value%\"}"; value="${value#\"}" ;;
+      \'*\') value="${value%\'}"; value="${value#\'}" ;;
+    esac
+    if [ -z "${!key:-}" ]; then
+      export "$key=$value"
+    fi
+  done < "$file"
 }
 
 load_env "$PWD/.env"

@@ -45,8 +45,13 @@ def upload_dataset(
 ) -> str:
     """Push the examples with encoded thumbnails; returns the repository id."""
     from datasets import Dataset, Image
+    from huggingface_hub import HfApi
 
-    dataset = Dataset.from_list(_rows(examples_path, image_root)).cast_column("image", Image())
+    rows = _rows(examples_path, image_root)
+    HfApi(token=token).create_repo(
+        repo_id=repo_id, repo_type="dataset", private=private, exist_ok=True
+    )
+    dataset = Dataset.from_list(rows).cast_column("image", Image())
     dataset.push_to_hub(repo_id, private=private, token=token)
     return repo_id
 
@@ -64,12 +69,13 @@ def main(argv: Sequence[str] | None = None) -> int:
     if not token:
         print("HF_TOKEN is not set", file=sys.stderr)
         return 2
+    print(f"uploading to {args.repo_id}", file=sys.stderr)
     try:
         repo_id = upload_dataset(
             args.examples, args.image_root, args.repo_id, token, private=not args.public
         )
-    except (OSError, ValueError) as err:
-        print(f"upload failed: {err}", file=sys.stderr)
+    except Exception as err:  # top-level CLI boundary
+        print(f"upload failed: {type(err).__name__}: {err}", file=sys.stderr)
         return 1
     print(repo_id)
     return 0
