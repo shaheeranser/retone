@@ -19,6 +19,7 @@ import cv2
 import numpy as np
 
 from retone.data.quality import QualityThresholds, acceptable, measure_quality
+from retone.train.env import load_env
 
 PD12M_DATASET = "Spawning/PD12M"
 USER_AGENT = "retone-dataset/0.1 (hackathon project)"
@@ -239,6 +240,7 @@ def _rows() -> Iterable[Mapping[str, Any]]:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
+    load_env()
     parser = argparse.ArgumentParser(description="Fetch a CC0/public-domain PD12M subset")
     parser.add_argument("--out", type=Path, default=DEFAULT_OUT)
     parser.add_argument("--limit", type=int, default=5000)

@@ -97,6 +97,57 @@ export HF_TOKEN=...                 # never commit this
 bash scripts/train_remote.sh        # add --max-steps 60 for a smoke run
 ```
 
+For local runs, copy the tracked template and fill it; `.env` is gitignored and
+the Python entry points plus `scripts/train_remote.sh` read it:
+
+```sh
+cp .env.example .env
+$EDITOR .env                       # HF_TOKEN, DATASET_REPO, OUTPUT_REPO
+```
+
+`HF_TOKEN` must have write access. `DATASET_REPO` is the private dataset from
+`upload_dataset`; `OUTPUT_REPO` receives the adapter, and `OUTPUT_REPO-merged`
+receives the merged model.
+
+### Google Colab
+
+1. Open <https://colab.research.google.com>, choose **Runtime → Change runtime
+   type → T4 GPU**, then run `!nvidia-smi` to confirm.
+2. Add `HF_TOKEN` in the key icon (Secrets), not in the notebook text.
+3. Clone and install:
+
+```python
+!git clone https://github.com/shaheeranser/retone.git /content/retone
+%cd /content/retone
+!pip install -e ".[train]"
+```
+
+4. Load the secret and repository ids into the environment:
+
+```python
+from google.colab import userdata
+import os
+os.environ["HF_TOKEN"] = userdata.get("HF_TOKEN")
+os.environ["DATASET_REPO"] = "your-username/retone-dataset"
+os.environ["OUTPUT_REPO"] = "your-username/retone-qwen"
+```
+
+5. Run the gate. The dataset must already be built and uploaded to
+   `DATASET_REPO`. `WORK_DIR` makes the script reuse this clone instead of
+   cloning again:
+
+```python
+!WORK_DIR=/content/retone MODEL=Qwen/Qwen2.5-VL-3B-Instruct \
+  bash scripts/train_remote.sh --max-steps 2 --sample-size 2
+```
+
+Repeat with `MODEL=Qwen/Qwen3.5-2B` to gate the second candidate. Free Colab
+sessions can disconnect; checkpoints are pushed every `--save-steps` steps, so
+use a small value such as 50 for longer runs.
+
+On Colab, Secrets or `os.environ` are preferred to a `.env` file. If you do
+create `/content/retone/.env`, it is gitignored and the script will source it.
+
 Validate the dataset and formatter without a GPU or token:
 
 ```sh

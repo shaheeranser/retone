@@ -12,6 +12,7 @@ from pathlib import Path
 
 from retone.data.errors import DatasetError
 from retone.train import qlora
+from retone.train.env import load_env
 from retone.train.formatting import TrainingExample, load_examples
 from retone.train.orchestrate import RetryPolicy, run_training
 
@@ -101,6 +102,7 @@ def _dry_run(args: argparse.Namespace) -> int:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
+    load_env()
     args = _parser().parse_args(argv)
     if args.dry_run:
         return _dry_run(args)

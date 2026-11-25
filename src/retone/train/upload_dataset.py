@@ -10,6 +10,8 @@ from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
 
+from retone.train.env import load_env
+
 
 def _rows(examples_path: Path, image_root: Path) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
@@ -50,6 +52,7 @@ def upload_dataset(
 
 
 def main(argv: Sequence[str] | None = None) -> int:
+    load_env()
     parser = argparse.ArgumentParser(description="Upload the retone dataset to Hugging Face")
     parser.add_argument("--examples", type=Path, required=True)
     parser.add_argument("--image-root", type=Path, required=True)

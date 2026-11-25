@@ -11,6 +11,7 @@ from pathlib import Path
 
 from retone.data.errors import DatasetError
 from retone.train import qlora
+from retone.train.env import load_env
 from retone.train.formatting import TrainingExample, load_examples
 
 
@@ -29,6 +30,7 @@ def _records(args: argparse.Namespace, token: str | None) -> tuple[TrainingExamp
 
 
 def main(argv: Sequence[str] | None = None) -> int:
+    load_env()
     parser = argparse.ArgumentParser(description="Score the prompted base model")
     source = parser.add_mutually_exclusive_group(required=True)
     source.add_argument("--dataset-repo")
