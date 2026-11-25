@@ -103,6 +103,13 @@ python -m retone.train.finetune --examples data/processed/examples.jsonl \
   --image-root data/processed --dry-run --bin-step 5
 ```
 
+Private before/after edits from the owner's library are collected into
+gitignored storage, never published:
+
+```sh
+python -m retone.train.collect_pairs --source ~/pictures --dest data/raw/pairs
+```
+
 Checkpoints, the adapter and the merged model are pushed to
 `$OUTPUT_REPO` and `$OUTPUT_REPO-merged`. Baseline and fine-tuned predictions
 are scored on the held-out split with:
