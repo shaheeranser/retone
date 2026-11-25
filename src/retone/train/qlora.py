@@ -6,6 +6,7 @@ function that needs it and PyTorch objects are typed as `Any` at this seam.
 
 from __future__ import annotations
 
+import inspect
 import sys
 from collections.abc import Sequence
 from dataclasses import dataclass, replace
@@ -143,6 +144,7 @@ def train_once(
     settings: TrainSettings, records: Sequence[TrainingExample], token: str
 ) -> LoadedModel:
     """Train one QLoRA run, push checkpoints, then push the adapter and merged model."""
+    import unsloth  # noqa: F401  # must be imported before trl/transformers
     from huggingface_hub import HfApi
     from trl import SFTConfig, SFTTrainer
     from unsloth.trainer import UnslothVisionDataCollator
@@ -190,13 +192,19 @@ def train_once(
         hub_private_repo=settings.private,
         hub_token=token,
     )
-    trainer = SFTTrainer(
-        model=loaded.model,
-        tokenizer=loaded.tokenizer,
-        data_collator=UnslothVisionDataCollator(loaded.model, loaded.tokenizer),
-        train_dataset=_as_vision_records(records),
-        args=arguments,
+    trainer_kwargs: dict[str, Any] = {
+        "model": loaded.model,
+        "data_collator": UnslothVisionDataCollator(loaded.model, loaded.tokenizer),
+        "train_dataset": _as_vision_records(records),
+        "args": arguments,
+    }
+    tokenizer_keyword = (
+        "processing_class"
+        if "processing_class" in inspect.signature(SFTTrainer.__init__).parameters
+        else "tokenizer"
     )
+    trainer_kwargs[tokenizer_keyword] = loaded.tokenizer
+    trainer = SFTTrainer(**trainer_kwargs)
     trainer.train()
 
     loaded.model.push_to_hub(settings.output_repo, private=settings.private, token=token)
