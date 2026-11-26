@@ -54,6 +54,24 @@ MODEL_DIR=~/.retone/model scripts/serve.sh --port 8080
 retone photo.jpg --server-url http://127.0.0.1:8080
 ```
 
+Build the GGUF files from the merged model that training pushed, using a
+llama.cpp checkout whose `llama-quantize` is already built:
+
+```sh
+python -m retone.train.quantize \
+  --model you/retone-qwen-merged \
+  --llama-cpp ~/llama.cpp \
+  --out ~/.retone/model
+```
+
+Measure the real pipeline (model and render time, peak RAM, thumbnail validity)
+against a running server:
+
+```sh
+python scripts/benchmark.py --image photo24mp.jpg \
+  --thumbnail-image photo24mp.jpg --repeats 3
+```
+
 Without a server, `retone` still runs `--set` (apply explicit parameters) and the
 `--params`/`--json` paths fail with a clear "model unavailable" message and exit
 code 4, never a stack trace. Exit codes are stable: `0` success, `2` usage, `3`
@@ -71,7 +89,7 @@ the real quantized model, its measurements, and the submission are still pending
 | `01-executor` | implemented and tested |
 | `02-dataset` | implemented; first real PD12M build and upload pending |
 | `03-finetune` | implemented; GPU gate and training run pending |
-| `04-quantize-eval` | human review and the serve script done; quantization, benchmarks, thumbnail check pending |
+| `04-quantize-eval` | metrics, human review, the serve script and the quantize/benchmark/thumbnail harnesses done; the host quantization, laptop measurements and real review pending |
 | `05-cli` | implemented and tested with a fake model; real-model and cross-OS checks pending |
 | `06-submission` | specified |
 | `07-extensions` (GUI, sliders, learned sharpening) | deferred |
