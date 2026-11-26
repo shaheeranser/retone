@@ -1,4 +1,4 @@
-"""Row selection drops mild rows and thins identity rows deterministically."""
+"""Row selection keeps synthetic and mild rows and thins identity deterministically."""
 
 from __future__ import annotations
 
@@ -11,10 +11,10 @@ ROWS = (
 )
 
 
-def test_mild_rows_are_dropped_and_synthetic_kept() -> None:
+def test_synthetic_and_mild_rows_are_kept() -> None:
     kinds = [row["kind"] for row in select_rows(ROWS)]
-    assert "mild" not in kinds
     assert kinds.count("synthetic") == 10
+    assert kinds.count("mild") == 10
 
 
 def test_identity_rows_are_thinned_to_about_the_fraction() -> None:

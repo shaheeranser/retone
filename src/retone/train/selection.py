@@ -6,10 +6,13 @@ import random
 from collections.abc import Iterable, Mapping
 from typing import Any
 
-# The first run trained on rows where 33% were identity and 20% were 3-15 point
-# changes that are invisible once rounded; greedy decoding then answered all zeros.
-KEPT_KINDS = frozenset({"synthetic"})
-IDENTITY_KEEP = 0.1
+# v1 trained on 33% identity and a fifth of mild 3-15 point edits, and greedy
+# decoding answered all zeros. v2 dropped both identity and mild and the model
+# never learned a small correction, so it could only answer identity or one
+# large value. Keep every visible correction (synthetic and mild) and thin
+# identity hard: it is a restraint signal, not a third of the data.
+KEPT_KINDS = frozenset({"synthetic", "mild"})
+IDENTITY_KEEP = 0.05
 
 
 def select_rows(
