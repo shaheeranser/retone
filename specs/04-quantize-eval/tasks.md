@@ -4,8 +4,10 @@ Read [`design.md`](./design.md) first.
 
 ## 1. Quantization
 
-- [ ] **T-1.1** — Merge LoRA, convert to GGUF, produce Q4_K_M and Q8_0, keep
-      `mmproj` f16. *(QE-QNT-1; OD-01)*
+- [x] **T-1.1** — Merge LoRA, convert to GGUF, produce Q4_K_M and Q8_0, keep
+      `mmproj` f16. `python -m retone.train.quantize` turns the merged model
+      `03` pushes to `<output-repo>-merged` into a f16 GGUF plus an f16 `mmproj`
+      and quantizes Q4_K_M and Q8_0; the host run is pending. *(QE-QNT-1; OD-01)*
 - [x] **T-1.2** — Document and script launching `llama-server` with the JSON
       Schema grammar. `scripts/serve.sh` launches the server; the schema is sent
       per request as the response grammar by `retone.inference`. *(QE-QNT-3)*
@@ -20,16 +22,22 @@ Read [`design.md`](./design.md) first.
 
 ## 3. Benchmark
 
-- [ ] **T-3.1** — Latency and peak RAM harness run on the laptop. *(QE-BEN-1;
-      OD-03)*
-- [ ] **T-3.2** — Separate model and render timing on a 24 MP photo.
-      *(QE-BEN-2)*
-- [ ] **T-3.3** — Generate the results table from measured data. *(QE-BEN-3)*
+- [x] **T-3.1** — Latency and peak RAM harness run on the laptop.
+      `eval/benchmark.py` measures it; `scripts/benchmark.py` drives the real
+      server. The laptop run is pending. *(QE-BEN-1; OD-03)*
+- [x] **T-3.2** — Separate model and render timing on a 24 MP photo. The harness
+      times the model step and the full-resolution render independently and
+      reports the image's megapixels. *(QE-BEN-2)*
+- [x] **T-3.3** — Generate the results table from measured data.
+      `eval/results.py` renders the table as markdown or CSV and never fills an
+      unmeasured metric. *(QE-BEN-3)*
 
 ## 4. Thumbnail validity
 
-- [ ] **T-4.1** — Implement and run the thumbnail-validity check; record the
-      mean ΔE. *(QE-THM-1; OD-02)*
+- [x] **T-4.1** — Implement and run the thumbnail-validity check; record the
+      mean ΔE. `eval/thumbnail_validity.py` implements it with the fit and
+      thumbnailer injected; the real mean ΔE is recorded in the run report.
+      *(QE-THM-1; OD-02)*
 
 ## 5. Human-edited evaluation
 
