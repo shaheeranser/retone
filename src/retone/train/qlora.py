@@ -18,6 +18,7 @@ from retone.data.errors import DatasetError
 from retone.executor import Params, json_schema
 from retone.train.formatting import TrainingExample, to_vision_record
 from retone.train.parsing import parse_generated_params
+from retone.train.selection import select_rows
 
 DEFAULT_MODEL = "Qwen/Qwen2.5-VL-3B-Instruct"
 
@@ -49,7 +50,7 @@ class LoadedModel:
 
 
 def load_examples_from_hub(
-    settings: TrainSettings, token: str
+    settings: TrainSettings, token: str, *, select_train: bool = False
 ) -> tuple[tuple[TrainingExample, ...], tuple[TrainingExample, ...]]:
     """Pull the private dataset and split rows by their recorded `split` column."""
     from datasets import load_dataset
@@ -69,11 +70,12 @@ def load_examples_from_hub(
             )
         ) from err
     dataset = bundle["train"] if "train" in bundle else bundle[next(iter(bundle))]
-    train: list[TrainingExample] = []
-    test: list[TrainingExample] = []
-    for row in dataset:
-        example = TrainingExample.from_mapping(row)
-        (test if row.get("split") == "test" else train).append(example)
+    rows = list(dataset)
+    train_rows = [row for row in rows if row.get("split") != "test"]
+    if select_train:
+        train_rows = select_rows(train_rows, seed=settings.seed)
+    train = [TrainingExample.from_mapping(row) for row in train_rows]
+    test = [TrainingExample.from_mapping(row) for row in rows if row.get("split") == "test"]
     if not train:
         raise DatasetError(("the Hugging Face dataset has no training rows",))
     return tuple(train), tuple(test or train)
@@ -108,7 +110,6 @@ def load_model(
             use_rslora=False,
             loftq_config=None,
             target_modules="all-linear",
-            modules_to_save=["lm_head", "embed_tokens"],
         )
     return LoadedModel(model=model, tokenizer=tokenizer)
 
@@ -230,7 +231,15 @@ def train_once(
     )
     trainer_kwargs: dict[str, Any] = {
         "model": loaded.model,
-        "data_collator": UnslothVisionDataCollator(loaded.model, loaded.tokenizer),
+        # Without response masking the loss covers the constant instruction and the model
+        # memorises it; these markers are Qwen2.5-VL's chat template.
+        "data_collator": UnslothVisionDataCollator(
+            loaded.model,
+            loaded.tokenizer,
+            train_on_responses_only=True,
+            instruction_part="<|im_start|>user\n",
+            response_part="<|im_start|>assistant\n",
+        ),
         "train_dataset": _as_vision_records(records),
         "args": arguments,
     }

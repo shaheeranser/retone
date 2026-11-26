@@ -123,7 +123,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         if args.examples is not None:
             train, _test = _load_local(args.examples, args.image_root, args.bin_step)
         else:
-            train, _test = qlora.load_examples_from_hub(settings, token)
+            train, _test = qlora.load_examples_from_hub(settings, token, select_train=True)
     except DatasetError as err:
         print(f"dataset failed: {err}", file=sys.stderr)
         return 2
