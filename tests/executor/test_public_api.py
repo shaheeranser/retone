@@ -6,6 +6,7 @@ import retone.executor as executor
 def test_public_api_is_exactly_what_the_package_exports() -> None:
     assert sorted(executor.__all__) == sorted(
         [
+            "INSTRUCTION",
             "SCHEMA",
             "ImageError",
             "ParamError",

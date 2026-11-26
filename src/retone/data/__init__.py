@@ -11,9 +11,10 @@ from retone.data.collect import (
 )
 from retone.data.corpus import SourceImage, derive_seed, load_manifest, split_items
 from retone.data.errors import DatasetError
-from retone.data.examples import INSTRUCTION, THUMBNAIL_LONG_EDGE, Example, thumbnail
+from retone.data.examples import THUMBNAIL_LONG_EDGE, Example, thumbnail
 from retone.data.pairs import Pair, PairKind, PairPolicy, build_pair, choose_kind
 from retone.data.sharpen_rule import classical_sharpen_amount
+from retone.executor import INSTRUCTION
 
 __all__ = [
     "INSTRUCTION",
