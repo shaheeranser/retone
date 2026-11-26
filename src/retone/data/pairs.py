@@ -29,11 +29,12 @@ class PairKind(StrEnum):
 
 @dataclass(frozen=True)
 class PairPolicy:
-    identity_weight: float = 0.3
-    synthetic_weight: float = 0.5
-    mild_weight: float = 0.2
+    identity_weight: float = 0.05
+    synthetic_weight: float = 0.55
+    mild_weight: float = 0.4
     synthetic_magnitude: Magnitude = field(default_factory=lambda: Magnitude(20, 70))
     mild_magnitude: Magnitude = field(default_factory=lambda: Magnitude(3, 15))
+    min_params: int = 2
     max_params: int = 4
     label_step: int = 5
     max_newly_clipped: float = 0.02
@@ -50,6 +51,10 @@ class PairPolicy:
             raise ValueError(f"max_newly_clipped must be in [0, 1], got {self.max_newly_clipped}")
         if self.max_attempts < 1:
             raise ValueError(f"max_attempts must be positive, got {self.max_attempts}")
+        if not 1 <= self.min_params <= self.max_params <= 8:
+            raise ValueError(
+                f"need 1 <= min_params <= max_params <= 8, got {self.min_params}..{self.max_params}"
+            )
 
 
 @dataclass(frozen=True)
@@ -77,6 +82,10 @@ def choose_kind(rng: np.random.Generator, policy: PairPolicy) -> PairKind:
     return PairKind.MILD
 
 
+def _nonzero(params: Params) -> int:
+    return sum(1 for value in params.as_dict().values() if value != 0)
+
+
 def _degraded_pair(
     target: IntImage, rng: np.random.Generator, kind: PairKind, policy: PairPolicy
 ) -> Pair:
@@ -84,23 +93,33 @@ def _degraded_pair(
     for scale in (1.0, 0.5, 0.25):
         for _ in range(policy.max_attempts):
             magnitude = Magnitude(max(1, round(base.low * scale)), max(1, round(base.high * scale)))
-            degradation = sample_params(rng, magnitude, policy.max_params)
+            degradation = sample_params(rng, magnitude, policy.max_params, policy.min_params)
             input_image = apply(target, degradation)
             clipped = newly_clipped_fraction(target, input_image)
             if clipped > policy.max_newly_clipped:
                 continue
             label = invert(degradation).coarsen(policy.label_step)
+            # Rounding to the label step can erase small values; keep retrying
+            # until the label still shows the required number of corrections.
+            if _nonzero(label) < policy.min_params:
+                continue
             corrected = apply(input_image, label)
+            residual = normalized_rms(target, corrected)
+            # Retry inside the attempt budget: returning a pair the caller then
+            # discards loses the heavy multi-parameter pairs that fail most often.
+            if residual > policy.max_residual:
+                continue
             return Pair(
                 input_image=input_image,
                 label=label,
                 degradation=degradation,
                 kind=kind,
-                residual=normalized_rms(target, corrected),
+                residual=residual,
                 newly_clipped=clipped,
             )
-    # Even an extreme image keeps a pair; the caller filters it if the guards fail.
-    degradation = sample_params(rng, Magnitude(1, 3), policy.max_params)
+    # No attempt passed both guards; return a small pair whose label still
+    # survives rounding, and let the caller filter it if it does not.
+    degradation = sample_params(rng, Magnitude(3, 5), policy.max_params, policy.min_params)
     input_image = apply(target, degradation)
     label = invert(degradation).coarsen(policy.label_step)
     return Pair(

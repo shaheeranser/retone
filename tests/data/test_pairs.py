@@ -13,6 +13,7 @@ TINY_POLICY = PairPolicy(
     synthetic_weight=1.0,
     mild_weight=0.0,
     synthetic_magnitude=Magnitude(1, 3),
+    min_params=1,
     label_step=1,
     max_residual=1.0,
 )
@@ -70,3 +71,31 @@ def test_policy_rejects_bad_weights() -> None:
 
     with pytest.raises(ValueError):
         PairPolicy(identity_weight=0.5, synthetic_weight=0.5, mild_weight=0.5)
+
+
+def test_default_policy_requires_at_least_two_parameters() -> None:
+    image = make_image()
+    policy = PairPolicy()
+    for seed in range(40):
+        pair = build_pair(image, np.random.default_rng(seed), PairKind.SYNTHETIC, policy)
+        non_zero = [name for name, value in pair.label.as_dict().items() if value != 0]
+        assert len(non_zero) >= policy.min_params
+
+
+def test_failed_pairs_come_from_the_small_fallback() -> None:
+    # With an impossible residual limit the attempts all fail, so the pair must
+    # be the small fallback (magnitudes 3..5) rather than a heavy synthetic one
+    # handed back mid-loop.
+    image = make_image()
+    policy = PairPolicy(
+        identity_weight=0.0,
+        synthetic_weight=1.0,
+        mild_weight=0.0,
+        synthetic_magnitude=Magnitude(20, 70),
+        min_params=2,
+        max_residual=0.0,
+    )
+    pair = build_pair(image, np.random.default_rng(3), PairKind.SYNTHETIC, policy)
+    assert not pair.accepted(policy)
+    magnitudes = [abs(value) for value in pair.degradation.as_dict().values() if value != 0]
+    assert magnitudes and all(3 <= value <= 5 for value in magnitudes)

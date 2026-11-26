@@ -26,9 +26,16 @@ class Magnitude:
             raise ValueError(f"invalid magnitude range {self.low}..{self.high}")
 
 
-def sample_params(rng: np.random.Generator, magnitude: Magnitude, max_params: int = 4) -> Params:
-    """Choose 1..max_params distinct degradable parameters with random signs and magnitudes."""
-    count = int(rng.integers(1, max_params + 1))
+def sample_params(
+    rng: np.random.Generator, magnitude: Magnitude, max_params: int = 4, min_params: int = 1
+) -> Params:
+    """Choose min_params..max_params distinct degradable parameters with random magnitudes."""
+    if not 1 <= min_params <= max_params <= len(DEGRADABLE):
+        raise ValueError(
+            f"need 1 <= min_params <= max_params <= {len(DEGRADABLE)}, "
+            f"got {min_params}..{max_params}"
+        )
+    count = int(rng.integers(min_params, max_params + 1))
     names = rng.choice(DEGRADABLE, size=count, replace=False)
     values = {name: 0 for name in DEGRADABLE}
     for name in names:

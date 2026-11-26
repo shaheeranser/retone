@@ -27,6 +27,23 @@ def test_sampling_respects_range_and_parameter_cap() -> None:
         assert all(20 <= abs(values[name]) <= 70 for name in non_zero)
 
 
+def test_sampling_respects_a_minimum_parameter_count() -> None:
+    rng = np.random.default_rng(7)
+    for _ in range(200):
+        params = sample_params(rng, Magnitude(20, 70), max_params=4, min_params=2)
+        values = params.as_dict()
+        non_zero = [name for name in DEGRADABLE if values[name] != 0]
+        assert 2 <= len(non_zero) <= 4
+
+
+def test_sampling_rejects_an_inverted_parameter_count() -> None:
+    rng = np.random.default_rng(0)
+    with pytest.raises(ValueError):
+        sample_params(rng, Magnitude(20, 70), max_params=2, min_params=3)
+    with pytest.raises(ValueError):
+        sample_params(rng, Magnitude(20, 70), max_params=0, min_params=0)
+
+
 def test_invert_negates_and_clamps() -> None:
     params = Params(exposure=70, temperature=-30, sharpen_amount=40)
     inverse = invert(params)
