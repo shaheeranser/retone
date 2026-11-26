@@ -10,9 +10,11 @@
 #   GGUF=${GGUF:-$MODEL_DIR/model-Q4_K_M.gguf}
 #   MMPROJ=${MMPROJ:-$MODEL_DIR/mmproj-f16.gguf}
 # Optional: HOST (127.0.0.1), PORT (8080), CTX (8192), NGL (0, CPU only),
-# IMAGE_MIN_TOKENS (1024). Qwen2.5-VL needs at least 1024 image tokens and its
-# own embedded chat template; forcing `--chat-template qwen2-vl` produced a
-# prompt with no image marker, so the model never saw the photo.
+# IMAGE_MIN_TOKENS (512). The fine-tune resized images to 512 vision tokens, so
+# inference matches it; Qwen2.5-VL's 1024 default (for grounding tasks) roughly
+# doubled latency without helping global adjustments. Forcing
+# `--chat-template qwen2-vl` also produced a prompt with no image marker, so the
+# model never saw the photo; the template embedded in the GGUF is used instead.
 #
 # Usage: scripts/serve.sh [--host HOST] [--port PORT] [extra llama-server flags...]
 set -euo pipefail
@@ -21,7 +23,7 @@ HOST=${HOST:-127.0.0.1}
 PORT=${PORT:-8080}
 CTX=${CTX:-8192}
 NGL=${NGL:-0}
-IMAGE_MIN_TOKENS=${IMAGE_MIN_TOKENS:-1024}
+IMAGE_MIN_TOKENS=${IMAGE_MIN_TOKENS:-512}
 
 while [ $# -gt 0 ]; do
   case "$1" in
