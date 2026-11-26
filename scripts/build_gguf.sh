@@ -9,7 +9,7 @@
 #   bash scripts/build_gguf.sh
 #
 # Environment (all optional):
-#   MERGED_REPO   private merged HF model    (default shaheeranser/retone-qwen-vl3b-merged)
+#   MERGED_REPO   private merged HF model    (default shaheeranser/retone-qwen-vl3b-v2-merged)
 #   LLAMA_CPP     llama.cpp checkout          (default $HOME/llama.cpp)
 #   OUT_DIR       where the GGUF files land   (default $HOME/.retone/model)
 #   WORK_DIR      download + converter venv   (default $HOME/.retone/work)
@@ -25,7 +25,7 @@
 set -euo pipefail
 
 REPO_ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-MERGED_REPO=${MERGED_REPO:-shaheeranser/retone-qwen-vl3b-merged}
+MERGED_REPO=${MERGED_REPO:-shaheeranser/retone-qwen-vl3b-v2-merged}
 LLAMA_CPP=${LLAMA_CPP:-$HOME/llama.cpp}
 OUT_DIR=${OUT_DIR:-$HOME/.retone/model}
 WORK_DIR=${WORK_DIR:-$HOME/.retone/work}
