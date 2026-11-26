@@ -1,0 +1,8 @@
+exposure       +18
+temperature    -6
+contrast       +12
+highlights     -15
+shadows        +8
+saturation     +4
+vibrance       +10
+sharpen_amount +25

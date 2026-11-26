@@ -41,6 +41,9 @@ train = [
 [project.urls]
 Repository = "https://github.com/shaheeranser/retone"
 
+[project.scripts]
+retone = "retone.cli.__main__:main"
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/retone"]
 
