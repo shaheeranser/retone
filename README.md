@@ -39,11 +39,31 @@ retone photo.jpg --compare       # also writes a before/after image
 Results go to stdout and diagnostics to stderr, so the output pipes cleanly.
 Linux is the primary target, and the tool should work on macOS and Windows too.
 
+### Running the model
+
+The command talks to a running `llama-server`; it does not embed the model. Start
+the server on the quantized GGUF and `mmproj` from `04`, then run `retone` against
+it. The parameter JSON Schema is sent per request as the response grammar, so the
+model can only emit valid JSON.
+
+```sh
+# Terminal 1: serve the model (path holds the GGUF and mmproj files)
+MODEL_DIR=~/.retone/model scripts/serve.sh --port 8080
+
+# Terminal 2: enhance, pointing at that server
+retone photo.jpg --server-url http://127.0.0.1:8080
+```
+
+Without a server, `retone` still runs `--set` (apply explicit parameters) and the
+`--params`/`--json` paths fail with a clear "model unavailable" message and exit
+code 4, never a stack trace. Exit codes are stable: `0` success, `2` usage, `3`
+input, `4` model, `5` write.
+
 ## Status
 
-Early. The deterministic executor and the dataset builder are implemented and
-tested. **The `retone` command does not exist yet**; it arrives in `05-cli`. The
-usage above describes the intended tool, not what runs now.
+Early. The deterministic executor, the dataset builder, and the `retone` command
+are implemented and tested. The command runs end to end with a fake model today;
+the real quantized model, its measurements, and the submission are still pending.
 
 | Milestone | State |
 |---|---|
@@ -51,8 +71,8 @@ usage above describes the intended tool, not what runs now.
 | `01-executor` | implemented and tested |
 | `02-dataset` | implemented; first real PD12M build and upload pending |
 | `03-finetune` | implemented; GPU gate and training run pending |
-| `04-quantize-eval` | human review implemented; quantization and benchmarks pending |
-| `05-cli` | specified |
+| `04-quantize-eval` | human review and the serve script done; quantization, benchmarks, thumbnail check pending |
+| `05-cli` | implemented and tested with a fake model; real-model and cross-OS checks pending |
 | `06-submission` | specified |
 | `07-extensions` (GUI, sliders, learned sharpening) | deferred |
 

@@ -42,11 +42,28 @@ success, usage error, input error, model-unavailable, write error.
 
 ## Open decisions
 
-- **OD-01** — CLI framework; links to `00-scaffolding` OD-02.
-- **OD-02** — How the model runs: the CLI starts and stops `llama-server` itself,
-  talks to an already-running one, or embeds llama.cpp via bindings.
+- **OD-01** — CLI framework. Resolved 2026-11-26 (owner): `argparse`. The command
+  is deliberately small (one positional list plus flags), so a third-party
+  framework adds a dependency for no gain; stdlib keeps the license register
+  short and matches the existing `retone.eval` entry point. The command installs
+  as a `retone` console script (`pyproject.toml`) and also runs as
+  `python -m retone`.
+- **OD-02** — How the model runs. Resolved 2026-11-26 (owner wanted the model "in
+  the tool"): the model is shipped as a GGUF beside the tool, not reimplemented in
+  Python; the client talks to a running `llama-server` over HTTP, and
+  `scripts/serve.sh` launches it. This keeps the heavy ML stack out of the Python
+  package (the laptop needs only llama.cpp), keeps the client a swappable seam for
+  tests, and still gives one logical tool: `retone photo.jpg` works once the
+  server is up. True in-process bindings (`llama-cpp-python`) remain a later swap
+  behind the same `InferenceClient` interface; they add a compiled dependency and
+  are not needed for the submission. The schema is sent per request as the
+  response grammar, so it stays a single source of truth.
 - **OD-03** — Distribution: PyPI via `uv tool`/`pipx`, a single binary, or both;
-  how the GGUF is fetched (`hf download` vs bundled).
-- **OD-04** — Output naming and overwrite policy defaults.
-- **OD-05** — Whether the before/after output is a side-by-side image, a split,
-  or both.
+  how the GGUF is fetched (`hf download` vs bundled). Deferred to `06-submission`.
+- **OD-04** — Output naming and overwrite policy. Resolved 2026-11-26 (owner):
+  default is a `_retone` suffix beside the input (`photo.jpg` -> `photo_retone.jpg`),
+  an explicit `--out` overrides it, and an existing output is refused unless
+  `--force` is given. The input file is never written.
+- **OD-05** — Before/after output. Resolved 2026-11-26 (owner): both layouts via
+  `--compare side-by-side|split|both`; `both` writes two images. Default is off so
+  the one-command path writes only the enhanced image.

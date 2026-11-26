@@ -6,8 +6,9 @@ Read [`design.md`](./design.md) first.
 
 - [ ] **T-1.1** — Merge LoRA, convert to GGUF, produce Q4_K_M and Q8_0, keep
       `mmproj` f16. *(QE-QNT-1; OD-01)*
-- [ ] **T-1.2** — Document and script launching `llama-server` with the JSON
-      Schema grammar. *(QE-QNT-3)*
+- [x] **T-1.2** — Document and script launching `llama-server` with the JSON
+      Schema grammar. `scripts/serve.sh` launches the server; the schema is sent
+      per request as the response grammar by `retone.inference`. *(QE-QNT-3)*
 
 ## 2. Metrics
 

@@ -49,7 +49,7 @@ inference (laptop) photo -> 448 px thumbnail -> llama-server (GGUF, JSON schema)
 ## 4. Module map and dependency direction
 
 ```text
-src/retone/executor/   apply(), parameter schema, ranges, colour-space maths
+src/retone/executor/   apply(), parameter schema, ranges, colour-space maths, ICC sniffing
 src/retone/data/       PD12M corpus loading, pair construction, examples
 src/retone/train/      fine-tuning and export entry scripts (run on any GPU host)
 src/retone/eval/       delta-E and parameter metrics, benchmark runner
