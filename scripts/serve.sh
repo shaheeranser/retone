@@ -9,15 +9,19 @@
 # Required environment (or flags): MODEL_DIR holding the GGUF and mmproj files.
 #   GGUF=${GGUF:-$MODEL_DIR/model-Q4_K_M.gguf}
 #   MMPROJ=${MMPROJ:-$MODEL_DIR/mmproj-f16.gguf}
-# Optional: HOST (127.0.0.1), PORT (8080), CTX (4096), NGL (0, CPU only).
+# Optional: HOST (127.0.0.1), PORT (8080), CTX (8192), NGL (0, CPU only),
+# IMAGE_MIN_TOKENS (1024). Qwen2.5-VL needs at least 1024 image tokens and its
+# own embedded chat template; forcing `--chat-template qwen2-vl` produced a
+# prompt with no image marker, so the model never saw the photo.
 #
 # Usage: scripts/serve.sh [--host HOST] [--port PORT] [extra llama-server flags...]
 set -euo pipefail
 
 HOST=${HOST:-127.0.0.1}
 PORT=${PORT:-8080}
-CTX=${CTX:-4096}
+CTX=${CTX:-8192}
 NGL=${NGL:-0}
+IMAGE_MIN_TOKENS=${IMAGE_MIN_TOKENS:-1024}
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -42,6 +46,6 @@ exec llama-server \
   --port "$PORT" \
   --ctx-size "$CTX" \
   --n-gpu-layers "$NGL" \
-  --chat-template qwen2-vl \
+  --image-min-tokens "$IMAGE_MIN_TOKENS" \
   --jinja \
   "$@"
