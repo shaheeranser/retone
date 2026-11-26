@@ -16,6 +16,8 @@ from collections.abc import Callable, Sequence
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
+from retone.train.env import load_env
+
 DEFAULT_QUANTS = ("Q4_K_M", "Q8_0")
 MODEL_F16 = "model-f16.gguf"
 MMPROJ_F16 = "mmproj-f16.gguf"
@@ -130,6 +132,9 @@ def _parser() -> argparse.ArgumentParser:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
+    # The converter child process reads HF_TOKEN from the environment, so load a
+    # local .env first; a private merged repository needs that token to download.
+    load_env()
     args = _parser().parse_args(argv)
     config = QuantizeConfig(
         model=args.model,

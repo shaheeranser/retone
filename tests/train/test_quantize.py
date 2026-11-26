@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 import pytest
@@ -10,7 +11,9 @@ from retone.train.quantize import (
     MMPROJ_F16,
     MODEL_F16,
     QuantizeConfig,
+    QuantizeSummary,
     convert_command,
+    main,
     mmproj_command,
     quantization_names,
     quantize_command,
@@ -109,3 +112,23 @@ def test_run_rejects_an_empty_quantization_list(tmp_path: Path) -> None:
     config = QuantizeConfig(model="m", out_dir=tmp_path, llama_cpp=tmp_path, quants=())
     with pytest.raises(ValueError):
         run(config, runner=lambda command: None)
+
+
+def test_main_loads_env_so_the_converter_can_read_a_private_repo(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / ".env").write_text("HF_TOKEN=private-token\n")
+    monkeypatch.delenv("HF_TOKEN", raising=False)
+    captured: dict[str, str | None] = {}
+
+    def fake_run(config: QuantizeConfig) -> QuantizeSummary:
+        captured["token"] = os.environ.get("HF_TOKEN")
+        return QuantizeSummary(model_f16="m", mmproj="p", quants={})
+
+    monkeypatch.setattr("retone.train.quantize.run", fake_run)
+    code = main(
+        ["--model", "shaheeranser/private-merged", "--out", str(tmp_path / "o"), "--llama-cpp", "l"]
+    )
+    assert code == 0
+    assert captured["token"] == "private-token"
