@@ -22,7 +22,7 @@ from typing import Any, cast
 import numpy as np
 from numpy.typing import NDArray
 
-from retone.eval import measure, thumbnail_validity
+from retone.eval import measure, peak_rss_bytes, thumbnail_validity
 from retone.executor import Params, load_image
 from retone.inference import LlamaServerClient, thumbnail, validate_model_output
 
@@ -33,6 +33,19 @@ def _choose(client: LlamaServerClient, image: Image) -> Params:
     # The client re-encodes any integer array, so a 16-bit photo is fine here.
     encoded = cast(NDArray[np.uint8], image)
     return validate_model_output(client.choose_params(encoded)).params
+
+
+def _process_peak_rss(pid: int) -> int:
+    """Peak resident set size (VmHWM) of a process, in bytes."""
+    status = Path(f"/proc/{pid}/status")
+    try:
+        lines = status.read_text().splitlines()
+    except OSError as err:
+        raise SystemExit(f"cannot read {status}: {err} (pass a valid --server-pid)") from err
+    for line in lines:
+        if line.startswith("VmHWM:"):
+            return int(line.split()[1]) * 1024
+    raise SystemExit(f"{status} has no VmHWM line; is {pid} a llama-server process?")
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -46,6 +59,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         help="photo for the thumbnail-validity check; repeatable",
     )
     parser.add_argument("--server-url", default="http://127.0.0.1:8080")
+    parser.add_argument(
+        "--server-pid",
+        type=int,
+        default=None,
+        help="llama-server PID; when given, peak RAM is the server's, not the client's",
+    )
     parser.add_argument("--repeats", type=int, default=1)
     args = parser.parse_args(argv)
 
@@ -55,8 +74,13 @@ def main(argv: Sequence[str] | None = None) -> int:
     def pipeline_fit(passed: Image) -> Params:
         return _choose(client, thumbnail(passed))
 
+    peak = (
+        (lambda: _process_peak_rss(args.server_pid))
+        if args.server_pid is not None
+        else peak_rss_bytes
+    )
     report: dict[str, object] = {
-        "benchmark": asdict(measure(image, pipeline_fit, repeats=args.repeats))
+        "benchmark": asdict(measure(image, pipeline_fit, repeats=args.repeats, peak=peak))
     }
 
     if args.thumbnail_image:
