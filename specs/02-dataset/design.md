@@ -104,16 +104,21 @@ before `03-finetune` freezes them:
 
 | Setting | Default | Rationale |
 |---|---|---|
-| identity / synthetic / mild ratio | 0.3 / 0.5 / 0.2 | Identity guards against over-correction; synthetic dominates because that is the correction being taught; mild teaches restraint. |
+| identity / synthetic / mild ratio | 0.05 / 0.55 / 0.4 | Identity is a restraint signal only; the v3 audit (2026-11-27) showed 30% identity plus a train-time mild drop taught the model to answer identity. Corrected to a near-zero identity share and a mild share that is no longer discarded at training time. |
 | synthetic magnitude | 20..70 | Large enough to be visible, short of the ranges that clip. |
 | mild magnitude | 3..15 | Subtle, below typical noise in perceived quality. |
-| parameters per degradation | 1..4 | Avoids unrealistic all-at-once distortions. |
+| parameters per degradation | 2..4 | At least two distinct corrections; the audit showed 37% single-parameter rows reinforced the model's one-value habit. |
 | label step | 5 | Rounded targets are easier to learn; one-unit precision is not meaningful. |
 | min source side | 512 px | The source is the ground truth; tiny images add nothing. |
 | max source clipped fraction | 0.05 | Rejects already-crushed sources before degradation. |
 | min source sharpness | Laplacian variance 20 | Rejects blurry sources. |
 | max newly clipped fraction | 0.02 | Keeps the inverse label meaningful. |
 | max reconstruction RMS | 0.02 of full scale | Drops pairs the executor cannot invert. |
+
+The residual guard retries inside the attempt budget instead of returning a pair
+the caller then discards, so heavy multi-parameter pairs survive rather than being
+filtered out. `select_rows` keeps `synthetic` and `mild` rows and thins `identity`
+to 5%; it no longer drops mild rows.
 
 Sharpening is excluded from deformations: the executor can only sharpen, so no
 degradation corresponds to a negative label.
@@ -167,7 +172,9 @@ instruction is one fixed string (golden-tested).
   are analytic. Human-edited pairs are evaluation-only in v1, so no fitting step
   exists; OD-05 reopens only if they ever enter training.
 - **OD-03** — Residual threshold and augmentation ratio. Resolved 2026-11-24 with
-  the table in §4; retunable until `03-finetune` starts.
+  the table in §4; retuned 2026-11-27 after the uploaded-dataset audit (identity
+  0.3 → 0.05, parameters 1..4 → 2..4, mild rows kept at training time, residual
+  guard retries instead of discarding). Retunable until `03-finetune` starts.
 - **OD-04** — Detail crop. Resolved 2026-11-24: thumbnail only in v1.
 - **OD-05** — Label recovery for human-edited pairs. Resolved 2026-11-24: not
   needed in v1; the pairs are evaluation-only and no labels are fitted. Reopen
