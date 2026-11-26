@@ -54,14 +54,14 @@ MODEL_DIR=~/.retone/model scripts/serve.sh --port 8080
 retone photo.jpg --server-url http://127.0.0.1:8080
 ```
 
-Build the GGUF files from the merged model that training pushed, using a
-llama.cpp checkout whose `llama-quantize` is already built:
+Build the GGUF files from the merged model that training pushed. The script is
+verbose by design: it clones and builds llama.cpp, sets up a conversion venv,
+downloads the merged repo (private; `HF_TOKEN` is read from `.env`), then
+converts and quantizes to Q4_K_M and Q8_0 with the projector at f16.
 
 ```sh
-python -m retone.train.quantize \
-  --model you/retone-qwen-merged \
-  --llama-cpp ~/llama.cpp \
-  --out ~/.retone/model
+bash scripts/build_gguf.sh
+# override defaults with env vars: MERGED_REPO, LLAMA_CPP, OUT_DIR, WORK_DIR, TRACE=1
 ```
 
 Measure the real pipeline (model and render time, peak RAM, thumbnail validity)
