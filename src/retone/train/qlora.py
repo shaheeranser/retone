@@ -86,12 +86,18 @@ def _vision_dataset_from_handles(records: Sequence[TrainingExample]) -> Any:
     from datasets import Dataset, concatenate_datasets
 
     parts = []
-    for start in range(0, len(records), VISION_CHUNK):
+    total = len(records)
+    step = max(1, total // 10)
+    for start in range(0, total, VISION_CHUNK):
         rows = [
             {"messages": _messages(record, _as_pil(record.image))}
             for record in records[start : start + VISION_CHUNK]
         ]
         parts.append(Dataset.from_list(rows))
+        # Visible progress: a silent 25k-row build looks hung from a notebook.
+        done = min(start + VISION_CHUNK, total)
+        if done % step < VISION_CHUNK or done == total:
+            print(f"  encoded {done}/{total} rows", file=sys.stderr, flush=True)
     return parts[0] if len(parts) == 1 else concatenate_datasets(parts)
 
 
@@ -205,19 +211,28 @@ def load_model(
 
 
 def _as_pil(image: Any) -> Any:
-    """Normalise to a PIL RGB image; PIL is imported only on the paths needing it."""
+    """Normalise to a PIL image, keeping its on-disk format where possible.
+
+    `convert("RGB")` on an image that is already RGB returns a new in-memory
+    image with no `format`, so `datasets` re-encodes it as PNG: ~450 KB and
+    ~340 ms per row instead of ~85 KB and ~100 ms from the source JPEG. Only
+    convert when the mode actually differs.
+    """
     if isinstance(image, ImageHandle):
         decoded = image.dataset[image.index]["image"]
-        # datasets' Image() column decodes to a PIL image already, and convert()
-        # is available on it without importing PIL in this process.
-        return decoded.convert("RGB") if hasattr(decoded, "convert") else decoded
-    from PIL import Image
-
+        # The Hub Image() column yields a decoded image that still knows its
+        # format; converting an already-RGB image would drop that and force a
+        # PNG re-encode.
+        if getattr(decoded, "mode", "RGB") != "RGB":
+            return decoded.convert("RGB")
+        return decoded
     if isinstance(image, Path):
+        from PIL import Image
+
         with Image.open(image) as handle:
             return handle.convert("RGB")
-    if isinstance(image, Image.Image):
-        return image.convert("RGB")
+    if type(image).__module__.startswith("PIL."):
+        return image.convert("RGB") if image.mode != "RGB" else image
     return image
 
 

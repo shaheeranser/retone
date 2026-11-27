@@ -21,6 +21,8 @@ from retone.train import qlora
 
 
 class FakeImage:
+    mode = "RGB"  # _as_pil must not convert an already-RGB image
+
     def __init__(self, seed: int) -> None:
         self.seed = seed
         self.size = (448, 336)
@@ -180,3 +182,57 @@ def test_rank_guards_default_to_single_process(monkeypatch: pytest.MonkeyPatch) 
     for name in ("RANK", "WORLD_SIZE"):
         monkeypatch.delenv(name, raising=False)
     assert qlora.is_main() is True
+
+
+class CrossFormatImage:
+    """A PIL image already in RGB plus a format, like a decoded JPEG."""
+
+    mode = "RGB"
+    format = "JPEG"
+    size = (448, 336)
+
+    def __init__(self) -> None:
+        self.converted = False
+
+    def convert(self, mode: str) -> CrossFormatImage:
+        self.converted = True
+        return self
+
+
+def test_rgb_images_are_not_reconverted() -> None:
+    """convert("RGB") drops the format, so datasets would re-encode as PNG."""
+    image = CrossFormatImage()
+    assert qlora._as_pil(image) is image
+    assert image.converted is False
+
+
+@pytest.mark.skipif(
+    __import__("importlib").util.find_spec("PIL") is None,
+    reason="PIL is in the train extra, not .[dev]",
+)
+def test_non_rgb_images_are_converted() -> None:
+    """A real PIL image in L mode must come back as RGB."""
+    from PIL import Image as PILImage
+
+    image = PILImage.new("L", (8, 8), 128)
+    result = qlora._as_pil(image)
+    assert result.mode == "RGB"
+
+
+@pytest.mark.skipif(
+    __import__("importlib").util.find_spec("PIL") is None,
+    reason="PIL is in the train extra, not .[dev]",
+)
+def test_real_rgb_pil_image_keeps_its_format() -> None:
+    """A decoded JPEG must not be re-encoded as PNG."""
+    import io
+
+    from PIL import Image as PILImage
+
+    buffer = io.BytesIO()
+    PILImage.new("RGB", (8, 8), (10, 20, 30)).save(buffer, format="JPEG")
+    buffer.seek(0)
+    with PILImage.open(buffer) as decoded:
+        decoded.load()
+    assert decoded.format == "JPEG"
+    assert qlora._as_pil(decoded) is decoded
