@@ -7,6 +7,8 @@ test can assert that construction decodes nothing and one sample decodes one.
 from __future__ import annotations
 
 import json
+import sys
+import types
 from pathlib import Path
 from typing import Any
 
@@ -75,11 +77,15 @@ class FakeDataset:
 @pytest.fixture
 def fake_loader(monkeypatch: pytest.MonkeyPatch) -> FakeDataset:
     dataset = FakeDataset()
+    module = types.ModuleType("datasets")
 
     def fake_load_dataset(repo: str, **kwargs: Any) -> dict[str, FakeDataset]:
         return {"train": dataset}
 
-    monkeypatch.setattr("datasets.load_dataset", fake_load_dataset)
+    module.load_dataset = fake_load_dataset  # type: ignore[attr-defined]
+    # `datasets` is a train-extra dependency, absent in CI's `.[dev]` install,
+    # so inject a stub instead of importing the real package.
+    monkeypatch.setitem(sys.modules, "datasets", module)
     return dataset
 
 

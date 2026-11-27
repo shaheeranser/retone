@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import sys
 from collections.abc import Sequence
 from dataclasses import asdict
@@ -107,9 +108,20 @@ def _dry_run(args: argparse.Namespace) -> int:
     return 0
 
 
+def _strip_torchrun_args(argv: Sequence[str]) -> list[str]:
+    """Drop the launcher's own flags, which argparse would reject.
+
+    `torchrun` appends `--local-rank=<n>` (newer torch) or `--local_rank=<n>`
+    (older) to the module's argv. Without this every DDP run exits 2 with
+    "unrecognized arguments".
+    """
+    return [arg for arg in argv if not re.match(r"--local[-_]rank(=|\s|$)", arg)]
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     load_env()
-    args = _parser().parse_args(argv)
+    raw = list(sys.argv[1:] if argv is None else argv)
+    args = _parser().parse_args(_strip_torchrun_args(raw))
     if args.dry_run:
         return _dry_run(args)
     if not args.output_repo:

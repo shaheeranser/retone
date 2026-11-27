@@ -68,3 +68,35 @@ def test_training_requires_an_output_repo(tmp_path: Path, monkeypatch: pytest.Mo
 
 def test_dry_run_needs_a_local_source(tmp_path: Path) -> None:
     assert main(["--dataset-repo", "someone/data", "--dry-run"]) == 2
+
+
+def test_torchrun_local_rank_is_ignored(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """torchrun appends --local-rank; argparse must not reject it (exit 2)."""
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("HF_TOKEN", "token")
+    examples = _corpus(tmp_path)
+    code = main(
+        ["--examples", str(examples), "--image-root", str(tmp_path), "--dry-run", "--local-rank=0"]
+    )
+    assert code == 0
+
+
+def test_torchrun_local_rank_underscore_is_ignored(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("HF_TOKEN", "token")
+    examples = _corpus(tmp_path)
+    assert (
+        main(
+            [
+                "--examples",
+                str(examples),
+                "--image-root",
+                str(tmp_path),
+                "--dry-run",
+                "--local_rank=1",
+            ]
+        )
+        == 0
+    )

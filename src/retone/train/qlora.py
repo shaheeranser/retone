@@ -194,11 +194,14 @@ def load_model(
 
 
 def _as_pil(image: Any) -> Any:
-    from PIL import Image
-
+    """Normalise to a PIL RGB image; PIL is imported only on the paths needing it."""
     if isinstance(image, ImageHandle):
         decoded = image.dataset[image.index]["image"]
-        return decoded.convert("RGB") if isinstance(decoded, Image.Image) else decoded
+        # datasets' Image() column decodes to a PIL image already, and convert()
+        # is available on it without importing PIL in this process.
+        return decoded.convert("RGB") if hasattr(decoded, "convert") else decoded
+    from PIL import Image
+
     if isinstance(image, Path):
         with Image.open(image) as handle:
             return handle.convert("RGB")
