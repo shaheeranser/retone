@@ -7,15 +7,17 @@ function that needs it and PyTorch objects are typed as `Any` at this seam.
 from __future__ import annotations
 
 import inspect
+import random
 import shutil
 import sys
 from collections.abc import Sequence
 from dataclasses import dataclass, replace
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar, overload
 
 from retone.data.errors import DatasetError
 from retone.executor import Params, json_schema
+from retone.train.distributed import is_main
 from retone.train.formatting import TrainingExample, to_vision_record
 from retone.train.parsing import parse_generated_params
 from retone.train.selection import select_rows
@@ -49,33 +51,110 @@ class LoadedModel:
     tokenizer: Any
 
 
+@dataclass(frozen=True)
+class ImageHandle:
+    """A position in the Hub dataset, decoded on demand instead of held decoded."""
+
+    dataset: Any
+    index: int
+
+
+class VisionRecords(Sequence[dict[str, Any]]):
+    """Indexable training set that decodes one image per access.
+
+    Unsloth's collator indexes samples, so this is all it needs. Building the
+    whole list eagerly costs ~13 GB (30k decoded 448 px thumbnails) and is what
+    the Kaggle OOM killer killed with SIGKILL 9.
+    """
+
+    column_names: ClassVar[list[str]] = ["messages"]
+
+    def __init__(self, records: Sequence[TrainingExample]) -> None:
+        self._records = records
+
+    def __len__(self) -> int:
+        return len(self._records)
+
+    @overload
+    def __getitem__(self, index: int) -> dict[str, Any]: ...
+
+    @overload
+    def __getitem__(self, index: slice) -> Sequence[dict[str, Any]]: ...
+
+    def __getitem__(self, index: int | slice) -> dict[str, Any] | Sequence[dict[str, Any]]:
+        if isinstance(index, slice):
+            return [self[position] for position in range(*index.indices(len(self)))]
+        record = self._records[index]
+        return to_vision_record(replace(record, image=_as_pil(record.image)))
+
+    def select(self, indices: Sequence[int]) -> VisionRecords:
+        """Subset view, as a datasets.Dataset would offer; decodes nothing."""
+        return VisionRecords([self._records[index] for index in indices])
+
+    def shuffle(self, seed: int | None = None) -> VisionRecords:
+        """Deterministic permutation of the view; decodes nothing."""
+        order = list(range(len(self._records)))
+        random.Random(seed).shuffle(order)
+        return self.select(order)
+
+
+def _example(dataset: Any, index: int, row: Any) -> TrainingExample:
+    return TrainingExample.from_mapping({**row, "image": ImageHandle(dataset, index)})
+
+
 def load_examples_from_hub(
     settings: TrainSettings, token: str, *, select_train: bool = False
 ) -> tuple[tuple[TrainingExample, ...], tuple[TrainingExample, ...]]:
-    """Pull the private dataset and split rows by their recorded `split` column."""
+    """Pull the private dataset and split rows by their recorded `split` column.
+
+    The image column is never materialised here: `list(dataset)` would decode
+    every thumbnail up front and exhaust the host's RAM before training starts.
+    """
     from datasets import load_dataset
 
+    # Pull every shard once and reuse the local cache on restart. The earlier
+    # `force_redownload` re-fetched ~477 MB on every run (and per rank under
+    # DDP); it was added for a stale empty revision, so that case is retried
+    # explicitly below instead of paying the download every time.
+    def _load(download_mode: str) -> Any:
+        return load_dataset(settings.dataset_repo, token=token, download_mode=download_mode)
+
     try:
-        bundle = load_dataset(
-            settings.dataset_repo,
-            token=token,
-            download_mode="force_redownload",
-        )
-    except Exception as err:  # dataset is an untrusted external boundary
+        bundle = _load("reuse_dataset_if_exists")
+        cached = bundle["train"] if "train" in bundle else bundle[next(iter(bundle))]
+        if len(cached) == 0:
+            raise DatasetError(("cached revision is empty",))
+    except Exception:  # dataset is an untrusted external boundary
+        try:
+            bundle = _load("force_redownload")
+        except Exception as err:
+            raise DatasetError(
+                (
+                    f"cannot load dataset {settings.dataset_repo!r}: {err}. "
+                    "Run `python -m retone.train.upload_dataset ...` first and check "
+                    "that the repo contains parquet files.",
+                )
+            ) from err
+    dataset = bundle["train"] if "train" in bundle else bundle[next(iter(bundle))]
+    if len(dataset) == 0:
         raise DatasetError(
             (
-                f"cannot load dataset {settings.dataset_repo!r}: {err}. "
-                "Run `python -m retone.train.upload_dataset ...` first and check "
-                "that the repo contains parquet files.",
+                f"dataset {settings.dataset_repo!r} has no rows. "
+                "Re-run `python -m retone.train.upload_dataset ...`.",
             )
-        ) from err
-    dataset = bundle["train"] if "train" in bundle else bundle[next(iter(bundle))]
-    rows = list(dataset)
-    train_rows = [row for row in rows if row.get("split") != "test"]
+        )
+    rows = list(dataset.remove_columns("image"))
+    train_positions = [(index, row) for index, row in enumerate(rows) if row.get("split") != "test"]
     if select_train:
-        train_rows = select_rows(train_rows, seed=settings.seed)
-    train = [TrainingExample.from_mapping(row) for row in train_rows]
-    test = [TrainingExample.from_mapping(row) for row in rows if row.get("split") == "test"]
+        candidates = [row for _, row in train_positions]
+        keep = {id(row) for row in select_rows(candidates, seed=settings.seed)}
+        train_positions = [(index, row) for index, row in train_positions if id(row) in keep]
+    train = [_example(dataset, index, row) for index, row in train_positions]
+    test = [
+        _example(dataset, index, row)
+        for index, row in enumerate(rows)
+        if row.get("split") == "test"
+    ]
     if not train:
         raise DatasetError(("the Hugging Face dataset has no training rows",))
     return tuple(train), tuple(test or train)
@@ -117,6 +196,9 @@ def load_model(
 def _as_pil(image: Any) -> Any:
     from PIL import Image
 
+    if isinstance(image, ImageHandle):
+        decoded = image.dataset[image.index]["image"]
+        return decoded.convert("RGB") if isinstance(decoded, Image.Image) else decoded
     if isinstance(image, Path):
         with Image.open(image) as handle:
             return handle.convert("RGB")
@@ -125,8 +207,8 @@ def _as_pil(image: Any) -> Any:
     return image
 
 
-def _as_vision_records(records: Sequence[TrainingExample]) -> list[dict[str, Any]]:
-    return [to_vision_record(replace(record, image=_as_pil(record.image))) for record in records]
+def _as_vision_records(records: Sequence[TrainingExample]) -> VisionRecords:
+    return VisionRecords(records)
 
 
 def _bf16_supported() -> bool:
@@ -151,7 +233,7 @@ def _restore_checkpoint(settings: TrainSettings, token: str) -> Path | None:
         return local
 
     from huggingface_hub import snapshot_download
-    from huggingface_hub.utils import EntryNotFoundError, RepositoryNotFoundError
+    from huggingface_hub.errors import EntryNotFoundError, RepositoryNotFoundError
 
     try:
         snapshot_download(
@@ -184,10 +266,11 @@ def train_once(
     from unsloth.trainer import UnslothVisionDataCollator
 
     api = HfApi(token=token)
-    api.create_repo(repo_id=settings.output_repo, private=settings.private, exist_ok=True)
-    api.create_repo(
-        repo_id=f"{settings.output_repo}-merged", private=settings.private, exist_ok=True
-    )
+    if is_main():
+        api.create_repo(repo_id=settings.output_repo, private=settings.private, exist_ok=True)
+        api.create_repo(
+            repo_id=f"{settings.output_repo}-merged", private=settings.private, exist_ok=True
+        )
 
     loaded = load_model(
         settings.model_name,
@@ -197,7 +280,7 @@ def train_once(
         seed=settings.seed,
     )
     settings.output_dir.mkdir(parents=True, exist_ok=True)
-    checkpoint = _restore_checkpoint(settings, token)
+    checkpoint = _restore_checkpoint(settings, token) if is_main() else None
     if checkpoint is not None:
         print(f"resuming from {checkpoint}", file=sys.stderr)
     bf16 = _bf16_supported()
@@ -223,11 +306,13 @@ def train_once(
         remove_unused_columns=False,
         dataset_text_field="",
         dataset_kwargs={"skip_prepare_dataset": True},
-        push_to_hub=True,
-        hub_model_id=settings.output_repo,
+        # Only rank 0 pushes; every rank uploading the same checkpoint would
+        # race on the Hub and multiply the egress.
+        push_to_hub=is_main(),
+        hub_model_id=settings.output_repo if is_main() else None,
         hub_strategy="every_save",
         hub_private_repo=settings.private,
-        hub_token=token,
+        hub_token=token if is_main() else None,
     )
     trainer_kwargs: dict[str, Any] = {
         "model": loaded.model,
@@ -260,6 +345,11 @@ def train_once(
             f"steps_per_second={steps_per_second}, steps={metrics.get('train_steps')}",
             file=sys.stderr,
         )
+
+    if not is_main():
+        # Secondary ranks train and stop; rank 0 owns the push, the merge and
+        # the local directory, which would otherwise be written twice at once.
+        return loaded
 
     loaded.model.push_to_hub(settings.output_repo, private=settings.private, token=token)
     merged_dir = settings.output_dir / "merged"
