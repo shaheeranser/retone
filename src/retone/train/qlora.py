@@ -7,13 +7,12 @@ function that needs it and PyTorch objects are typed as `Any` at this seam.
 from __future__ import annotations
 
 import inspect
-import random
 import shutil
 import sys
 from collections.abc import Sequence
 from dataclasses import dataclass, replace
 from pathlib import Path
-from typing import Any, ClassVar, overload
+from typing import Any
 
 from retone.data.errors import DatasetError
 from retone.executor import Params, json_schema
@@ -59,43 +58,44 @@ class ImageHandle:
     index: int
 
 
-class VisionRecords(Sequence[dict[str, Any]]):
-    """Indexable training set that decodes one image per access.
+def _messages(record: TrainingExample, image: Any) -> list[dict[str, Any]]:
+    """The Unsloth vision conversation for one example."""
+    return list(to_vision_record(replace(record, image=image))["messages"])
 
-    Unsloth's collator indexes samples, so this is all it needs. Building the
-    whole list eagerly costs ~13 GB (30k decoded 448 px thumbnails) and is what
-    the Kaggle OOM killer killed with SIGKILL 9.
+
+def _vision_dataset_from_handles(records: Sequence[TrainingExample]) -> Any:
+    """Build a real Dataset from Hub rows without holding decoded images in RAM.
+
+    TRL rejects anything that is not a `datasets.Dataset`, but the obvious
+    construction decodes every thumbnail into memory (~12 GB for 26k rows) and
+    the host OOM-killer ends the run. `select` is a memory-mapped view and `map`
+    streams row by row into an Arrow file, so peak memory stays at a batch of
+    images and the result is a genuine Dataset.
     """
+    source = records[0].image.dataset
+    indices = [record.image.index for record in records]
+    subset = source.select(indices)
 
-    column_names: ClassVar[list[str]] = ["messages"]
+    def convert(row: dict[str, Any], index: int) -> dict[str, Any]:
+        # The label comes from the record, not the row: the retry loop may have
+        # coarsened it for this attempt.
+        return {"messages": _messages(records[index], row["image"])}
 
-    def __init__(self, records: Sequence[TrainingExample]) -> None:
-        self._records = records
+    return subset.map(convert, with_indices=True, remove_columns=subset.column_names)
 
-    def __len__(self) -> int:
-        return len(self._records)
 
-    @overload
-    def __getitem__(self, index: int) -> dict[str, Any]: ...
+def _vision_dataset_from_list(records: Sequence[TrainingExample]) -> Any:
+    from datasets import Dataset
 
-    @overload
-    def __getitem__(self, index: slice) -> Sequence[dict[str, Any]]: ...
+    rows = [{"messages": _messages(record, _as_pil(record.image))} for record in records]
+    return Dataset.from_list(rows)
 
-    def __getitem__(self, index: int | slice) -> dict[str, Any] | Sequence[dict[str, Any]]:
-        if isinstance(index, slice):
-            return [self[position] for position in range(*index.indices(len(self)))]
-        record = self._records[index]
-        return to_vision_record(replace(record, image=_as_pil(record.image)))
 
-    def select(self, indices: Sequence[int]) -> VisionRecords:
-        """Subset view, as a datasets.Dataset would offer; decodes nothing."""
-        return VisionRecords([self._records[index] for index in indices])
-
-    def shuffle(self, seed: int | None = None) -> VisionRecords:
-        """Deterministic permutation of the view; decodes nothing."""
-        order = list(range(len(self._records)))
-        random.Random(seed).shuffle(order)
-        return self.select(order)
+def _as_vision_records(records: Sequence[TrainingExample]) -> Any:
+    """A real datasets.Dataset for TRL, built without an in-memory image list."""
+    if records and all(isinstance(record.image, ImageHandle) for record in records):
+        return _vision_dataset_from_handles(records)
+    return _vision_dataset_from_list(records)
 
 
 def _example(dataset: Any, index: int, row: Any) -> TrainingExample:
@@ -208,10 +208,6 @@ def _as_pil(image: Any) -> Any:
     if isinstance(image, Image.Image):
         return image.convert("RGB")
     return image
-
-
-def _as_vision_records(records: Sequence[TrainingExample]) -> VisionRecords:
-    return VisionRecords(records)
 
 
 def _bf16_supported() -> bool:
