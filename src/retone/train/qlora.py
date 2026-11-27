@@ -23,6 +23,10 @@ from retone.train.selection import select_rows
 
 DEFAULT_MODEL = "Qwen/Qwen2.5-VL-3B-Instruct"
 
+# Rows decoded per Dataset chunk. Bounds peak memory while building the training
+# set; large enough that concatenation is a handful of Arrow files, not 100.
+VISION_CHUNK = 512
+
 
 @dataclass(frozen=True)
 class TrainSettings:
@@ -64,24 +68,31 @@ def _messages(record: TrainingExample, image: Any) -> list[dict[str, Any]]:
 
 
 def _vision_dataset_from_handles(records: Sequence[TrainingExample]) -> Any:
-    """Build a real Dataset from Hub rows without holding decoded images in RAM.
+    """A real Dataset with correctly encoded images, built in bounded chunks.
 
-    TRL rejects anything that is not a `datasets.Dataset`, but the obvious
-    construction decodes every thumbnail into memory (~12 GB for 26k rows) and
-    the host OOM-killer ends the run. `select` is a memory-mapped view and `map`
-    streams row by row into an Arrow file, so peak memory stays at a batch of
-    images and the result is a genuine Dataset.
+    Two constraints pull in opposite directions:
+
+    - TRL only accepts a `datasets.Dataset`, so a list of plain dicts is not
+      enough;
+    - building one eagerly decodes every thumbnail into RAM (~12 GB for 26k
+      rows) and the host OOM-killer ends the run.
+
+    `Dataset.map` was the obvious way to stream it, but `datasets` re-serialises
+    the *nested* image value inside `messages` as the PIL object's `__dict__`,
+    which is not a usable image. `Dataset.from_list` encodes it correctly as
+    `{path, bytes}`. So build in chunks and concatenate: each chunk holds only
+    `chunk_size` decoded images, and the result is one genuine Dataset.
     """
-    source = records[0].image.dataset
-    indices = [record.image.index for record in records]
-    subset = source.select(indices)
+    from datasets import Dataset, concatenate_datasets
 
-    def convert(row: dict[str, Any], index: int) -> dict[str, Any]:
-        # The label comes from the record, not the row: the retry loop may have
-        # coarsened it for this attempt.
-        return {"messages": _messages(records[index], row["image"])}
-
-    return subset.map(convert, with_indices=True, remove_columns=subset.column_names)
+    parts = []
+    for start in range(0, len(records), VISION_CHUNK):
+        rows = [
+            {"messages": _messages(record, _as_pil(record.image))}
+            for record in records[start : start + VISION_CHUNK]
+        ]
+        parts.append(Dataset.from_list(rows))
+    return parts[0] if len(parts) == 1 else concatenate_datasets(parts)
 
 
 def _vision_dataset_from_list(records: Sequence[TrainingExample]) -> Any:

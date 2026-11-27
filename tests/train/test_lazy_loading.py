@@ -49,7 +49,7 @@ class FakeView:
 
 class FakeHubDataset:
     def __init__(self) -> None:
-        self.counter = {"decodes": 0, "mapped": 0, "selected": 0}
+        self.counter = {"decodes": 0, "from_list": 0, "largest": 0}
         self.rows = [
             {
                 "id": f"p{i}",
@@ -75,9 +75,9 @@ class FakeHubDataset:
         return FakeSelected([self.rows[i] for i in indices], self.counter)
 
     def map(self, fn: Any, **kwargs: Any) -> FakeMapped:
-        self.counter["mapped"] += 1
-        rows = [fn(row, i) for i, row in enumerate(self.rows)]
-        return FakeMapped(rows)
+        # datasets.map mis-encodes the NESTED image inside messages (it stores
+        # the PIL __dict__), so the builder must not use it. Fail loudly.
+        raise AssertionError("map must not be used to build the training dataset")
 
 
 class FakeRows:
@@ -102,21 +102,14 @@ class FakeSelected(FakeView):
         super().__init__(rows, counter)
         self.column_names = ["id", "split", "instruction", "answer", "kind", "image"]
 
-    def map(self, fn: Any, **kwargs: Any) -> FakeMapped:
-        self.counter["mapped"] += 1
-        return FakeMapped([fn(self[i], i) for i in range(len(self))])
-
 
 class FakeMapped:
     def __init__(self, rows: list[dict[str, Any]]) -> None:
         self.rows = rows
+        self.column_names = ["messages"]
 
     def __len__(self) -> int:
         return len(self.rows)
-
-    @property
-    def column_names(self) -> list[str]:
-        return ["messages"]
 
 
 @pytest.fixture
@@ -128,7 +121,17 @@ def hub(monkeypatch: pytest.MonkeyPatch) -> FakeHubDataset:
         return {"train": dataset}
 
     module.load_dataset = fake_load_dataset  # type: ignore[attr-defined]
-    module.Dataset = types.SimpleNamespace(from_list=lambda rows: FakeMapped(rows))
+
+    def fake_from_list(rows: list[dict[str, Any]]) -> FakeMapped:
+        dataset.counter["from_list"] += 1
+        dataset.counter["largest"] = max(dataset.counter["largest"], len(rows))
+        return FakeMapped(rows)
+
+    def fake_concat(parts: list[FakeMapped]) -> FakeMapped:
+        return FakeMapped([row for part in parts for row in part.rows])
+
+    module.Dataset = types.SimpleNamespace(from_list=fake_from_list)
+    module.concatenate_datasets = fake_concat  # type: ignore[attr-defined]
     # `datasets` is a train-extra dependency, absent in CI's `.[dev]` install,
     # so inject a stub instead of importing the real package.
     monkeypatch.setitem(sys.modules, "datasets", module)
@@ -148,11 +151,12 @@ def test_loading_decodes_no_images(hub: FakeHubDataset, tmp_path: Path) -> None:
     assert train and test
 
 
-def test_build_uses_a_streaming_map_not_a_list(hub: FakeHubDataset, tmp_path: Path) -> None:
+def test_build_chunks_from_list_and_never_maps(hub: FakeHubDataset, tmp_path: Path) -> None:
+    """from_list keeps images correctly encoded; map would corrupt them."""
     train, _ = qlora.load_examples_from_hub(_settings(tmp_path), "token")
     built = qlora._as_vision_records(train)
-    assert hub.counter["selected"] == 1  # memmapped subset, not a decoded copy
-    assert hub.counter["mapped"] == 1  # one streaming pass writes the Arrow file
+    assert hub.counter["from_list"] > 1  # built in chunks
+    assert hub.counter["largest"] <= qlora.VISION_CHUNK
     assert built.column_names == ["messages"]
     assert len(built) == len(train)
 
