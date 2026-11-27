@@ -69,7 +69,25 @@ if [ -n "$MODEL" ]; then
   model_args=(--model "$MODEL")
 fi
 
-exec python -m retone.train.finetune \
+# NPROC: number of GPUs to train on. Default 1. Set NPROC=2 (or leave it unset
+# and set NPROC=auto) to use every visible GPU through torchrun/DDP.
+NPROC=${NPROC:-1}
+if [ "$NPROC" = "auto" ]; then
+  if command -v nvidia-smi >/dev/null 2>&1; then
+    NPROC=$(nvidia-smi --list-gpus 2>/dev/null | wc -l | tr -d ' ')
+  else
+    NPROC=1
+  fi
+  [ "${NPROC:-0}" -ge 1 ] || NPROC=1
+fi
+
+train_module=(python -m retone.train.finetune)
+if [ "$NPROC" -gt 1 ]; then
+  echo "training on $NPROC GPUs with torchrun (DDP)" >&2
+  train_module=(torchrun --standalone --nproc_per_node "$NPROC" -m retone.train.finetune)
+fi
+
+exec "${train_module[@]}" \
   --dataset-repo "$DATASET_REPO" \
   --output-repo "$OUTPUT_REPO" \
   "${model_args[@]}" \

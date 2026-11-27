@@ -11,7 +11,9 @@ from dataclasses import asdict
 from pathlib import Path
 
 from retone.data.errors import DatasetError
+from retone.executor import Params
 from retone.train import qlora
+from retone.train.distributed import is_distributed, is_main
 from retone.train.env import load_env
 from retone.train.formatting import TrainingExample, load_examples
 from retone.train.orchestrate import RetryPolicy, run_training
@@ -134,13 +136,33 @@ def main(argv: Sequence[str] | None = None) -> int:
         min_std=args.min_std,
         sample_size=args.sample_size,
     )
+    if is_distributed() and policy.max_attempts > 1:
+        # A retry re-enters trainer.train() on every rank. If the ranks judged
+        # collapse differently one would loop and the others would hang, so DDP
+        # runs the single attempt and the collapse flag is read on rank 0 only.
+        print(
+            "distributed run: forcing a single attempt (no collapse retry)",
+            file=sys.stderr,
+        )
+
+    def predict(handle: object, records: Sequence[TrainingExample], limit: int) -> Sequence[Params]:
+        if not is_main():
+            # Non-zero ranks must not generate; they report spread labels so the
+            # collapse check does not trip and force a divergent retry.
+            return [Params(exposure=-1), Params(exposure=1)]
+        return qlora.predict(handle, records, limit, max_new_tokens=settings.max_new_tokens)
+
+    attempts = 1 if is_distributed() else policy.max_attempts
     outcome = run_training(
-        policy,
+        RetryPolicy(
+            max_attempts=attempts,
+            initial_bin_step=policy.initial_bin_step,
+            min_std=policy.min_std,
+            sample_size=policy.sample_size,
+        ),
         train,
         train_once=lambda _step, records: qlora.train_once(settings, records, token),
-        predict=lambda handle, records, limit: qlora.predict(
-            handle, records, limit, max_new_tokens=settings.max_new_tokens
-        ),
+        predict=predict,
     )
     print(json.dumps(asdict(outcome), indent=2))
     return 0
