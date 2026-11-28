@@ -9,7 +9,7 @@ from collections.abc import Sequence
 from dataclasses import asdict
 from pathlib import Path
 
-from retone.data import BuildConfig, DatasetError, build_dataset, load_manifest
+from retone.data import BuildConfig, DatasetError, PairPolicy, build_dataset, load_manifest
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -20,6 +20,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--test-fraction", type=float, default=0.1)
     parser.add_argument("--workers", type=int, default=1)
     parser.add_argument("--examples-per-photo", type=int, default=4)
+    defaults = PairPolicy()
+    parser.add_argument("--min-params", type=int, default=defaults.min_params)
+    parser.add_argument("--max-params", type=int, default=defaults.max_params)
     args = parser.parse_args(argv)
 
     try:
@@ -32,6 +35,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 test_fraction=args.test_fraction,
                 workers=args.workers,
                 examples_per_photo=args.examples_per_photo,
+                policy=PairPolicy(min_params=args.min_params, max_params=args.max_params),
             ),
         )
     except (DatasetError, OSError, ValueError) as err:
