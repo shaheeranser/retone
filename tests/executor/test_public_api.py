@@ -7,6 +7,7 @@ def test_public_api_is_exactly_what_the_package_exports() -> None:
     assert sorted(executor.__all__) == sorted(
         [
             "INSTRUCTION",
+            "REQUEST_LIMITS",
             "SCHEMA",
             "ImageError",
             "ParamError",

@@ -14,7 +14,7 @@ import cv2
 import numpy as np
 from numpy.typing import NDArray
 
-from retone.executor import INSTRUCTION, json_schema
+from retone.executor import INSTRUCTION, REQUEST_LIMITS, json_schema
 from retone.inference.errors import ModelUnavailableError
 
 
@@ -41,7 +41,7 @@ class LlamaServerClient:
                 }
             ],
             "temperature": 0,
-            "response_format": {"type": "json_object", "schema": json_schema()},
+            "response_format": {"type": "json_object", "schema": json_schema(REQUEST_LIMITS)},
         }
         answer = _post_json(f"{self.base_url.rstrip('/')}/v1/chat/completions", body, self.timeout)
         return _content_mapping(answer)
