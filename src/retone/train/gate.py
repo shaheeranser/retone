@@ -34,7 +34,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     _train, test = qlora.load_examples_from_hub(settings, token)
     rows = [r for r in test if any(r.params.as_dict().values())][: args.rows]
     loaded = qlora.load_model(str(args.adapter), lora=False)
-    predicted = qlora.predict(loaded, rows, len(rows))
+    predicted: list[Params] = []
+    for start in range(0, len(rows), 10):
+        predicted.extend(qlora.predict(loaded, rows[start : start + 10], 10))
+        print(f"gate: {len(predicted)}/{len(rows)} rows", file=sys.stderr, flush=True)
     expected = [r.params for r in rows]
     model_mae = _mean(parameter_mae(predicted, expected))
     identity_mae = _mean(parameter_mae([Params()] * len(rows), expected))
