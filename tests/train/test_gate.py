@@ -11,3 +11,11 @@ from retone.train.gate import verdict
 )
 def test_gate_verdict(model: float, identity: float, expected: bool) -> None:
     assert verdict(model, identity, 0.85) is expected
+
+
+def test_mae_is_the_mean_absolute_error_over_all_parameters() -> None:
+    from retone.executor import Params
+    from retone.train.gate import _mae
+
+    assert _mae([Params()], [Params(exposure=9)]) == 1.0
+    assert _mae([Params(exposure=9)], [Params(exposure=9)]) == 0.0

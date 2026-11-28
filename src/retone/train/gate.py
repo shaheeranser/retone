@@ -9,7 +9,6 @@ import sys
 from collections.abc import Sequence
 from pathlib import Path
 
-from retone.eval import parameter_mae
 from retone.executor import Params
 from retone.train import qlora
 
@@ -39,8 +38,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         predicted.extend(qlora.predict(loaded, rows[start : start + 10], 10))
         print(f"gate: {len(predicted)}/{len(rows)} rows", file=sys.stderr, flush=True)
     expected = [r.params for r in rows]
-    model_mae = _mean(parameter_mae(predicted, expected))
-    identity_mae = _mean(parameter_mae([Params()] * len(rows), expected))
+    model_mae = _mae(predicted, expected)
+    identity_mae = _mae([Params()] * len(rows), expected)
     passed = verdict(model_mae, identity_mae, args.margin)
     print(
         json.dumps(
@@ -55,8 +54,14 @@ def main(argv: Sequence[str] | None = None) -> int:
     return 0 if passed else 1
 
 
-def _mean(values: dict[str, float]) -> float:
-    return sum(values.values()) / len(values)
+def _mae(predicted: Sequence[Params], expected: Sequence[Params]) -> float:
+    """Mean absolute error over every parameter and row."""
+    errors = [
+        abs(guess.as_dict()[name] - value)
+        for guess, truth in zip(predicted, expected, strict=True)
+        for name, value in truth.as_dict().items()
+    ]
+    return sum(errors) / len(errors)
 
 
 if __name__ == "__main__":
