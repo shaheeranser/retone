@@ -68,8 +68,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         "mean_delta_e": report.mean_delta_e,
         "median_delta_e": report.median_delta_e,
         "per_pair_delta_e": {s.pair_id: s.delta_e for s in report.per_pair},
-        "params": {k: asdict(v) if hasattr(v, "__dataclass_fields__") else v
-                   for k, v in predictions.items()},
+        "params": {
+            k: asdict(v) if hasattr(v, "__dataclass_fields__") else v
+            for k, v in predictions.items()
+        },
     }
     (args.out / f"{args.label}.json").write_text(json.dumps(summary, indent=2, default=str))
     print(json.dumps({k: v for k, v in summary.items() if k not in ("params", "per_pair_delta_e")}))

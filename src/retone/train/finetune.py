@@ -46,7 +46,15 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--bin-step", type=int, default=1)
     parser.add_argument("--max-new-tokens", type=int, default=128)
     parser.add_argument("--seed", type=int, default=3407)
-    parser.add_argument("--public", action="store_true", help="push public (default private)")
+    parser.add_argument(
+        "--private",
+        action="store_true",
+        help="push model repos private (default public, which has free storage)",
+    )
+    parser.add_argument("--no-push", action="store_true", help="keep results local; no Hub traffic")
+    parser.add_argument(
+        "--pilot", action="store_true", help="short gate run: no Hub traffic and no merge"
+    )
     parser.add_argument(
         "--dry-run", action="store_true", help="validate local examples without a GPU or token"
     )
@@ -81,7 +89,9 @@ def _settings(args: argparse.Namespace) -> qlora.TrainSettings:
         seed=args.seed,
         resume=args.resume,
         output_dir=args.output_dir,
-        private=not args.public,
+        private=args.private,
+        push=not (args.no_push or args.pilot),
+        merge=not args.pilot,
     )
 
 

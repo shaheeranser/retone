@@ -66,9 +66,15 @@ def main(argv: Sequence[str] | None = None) -> int:
         help="llama-server PID; when given, peak RAM is the server's, not the client's",
     )
     parser.add_argument("--repeats", type=int, default=1)
+    parser.add_argument(
+        "--timeout",
+        type=float,
+        default=120.0,
+        help="per-request client timeout in seconds (CPU full-res fits need more)",
+    )
     args = parser.parse_args(argv)
 
-    client = LlamaServerClient(base_url=args.server_url)
+    client = LlamaServerClient(base_url=args.server_url, timeout=args.timeout)
     image = load_image(args.image)
 
     def pipeline_fit(passed: Image) -> Params:

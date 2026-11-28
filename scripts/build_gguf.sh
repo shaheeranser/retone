@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build llama.cpp, download the private merged model from Hugging Face, and
+# Build llama.cpp, download the merged model from Hugging Face, and
 # produce the GGUF quantizations retone serves.
 #
 # Verbose by design: every step prints what it is about to run and its result.
@@ -9,7 +9,7 @@
 #   bash scripts/build_gguf.sh
 #
 # Environment (all optional):
-#   MERGED_REPO   private merged HF model    (default shaheeranser/retone-qwen-vl3b-v2-merged)
+#   MERGED_REPO   merged HF model             (default shaheeranser/retone-qwen-vl3b-v3-merged)
 #   LLAMA_CPP     llama.cpp checkout          (default $HOME/llama.cpp)
 #   OUT_DIR       where the GGUF files land   (default $HOME/.retone/model)
 #   WORK_DIR      download + converter venv   (default $HOME/.retone/work)
@@ -17,7 +17,7 @@
 #   PYTHON        interpreter with retone     (default python3)
 #   CONVERT_PY    python for the converter    (default $WORK_DIR/venv/bin/python)
 #   JOBS          build parallelism           (default nproc)
-#   HF_TOKEN      required for the private repo; read from .env when present
+#   HF_TOKEN      read from .env when present (public repos work without it)
 #   TRACE=1       echo every shell command
 #
 # The converter runs in its own venv with llama.cpp's conversion requirements,
@@ -25,7 +25,7 @@
 set -euo pipefail
 
 REPO_ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-MERGED_REPO=${MERGED_REPO:-shaheeranser/retone-qwen-vl3b-v2-merged}
+MERGED_REPO=${MERGED_REPO:-shaheeranser/retone-qwen-vl3b-v3-merged}
 LLAMA_CPP=${LLAMA_CPP:-$HOME/llama.cpp}
 OUT_DIR=${OUT_DIR:-$HOME/.retone/model}
 WORK_DIR=${WORK_DIR:-$HOME/.retone/work}
@@ -66,7 +66,9 @@ load_env() {
 load_env "$PWD/.env"
 load_env "$REPO_ROOT/.env"
 
-[ -n "${HF_TOKEN:-}" ] || { echo "HF_TOKEN is not set; put it in .env or the environment" >&2; exit 2; }
+if [ -z "${HF_TOKEN:-}" ]; then
+  echo "  HF_TOKEN is not set; assuming the merged repo is public" >&2
+fi
 need git
 need cmake
 need "$PYTHON"
@@ -90,7 +92,7 @@ fi
 log "Configuration"
 cat <<EOF
   repo root     : $REPO_ROOT
-  merged repo   : $MERGED_REPO (private)
+  merged repo   : $MERGED_REPO
   merged dir    : $MERGED_DIR
   llama.cpp     : $LLAMA_CPP
   output dir    : $OUT_DIR
@@ -138,7 +140,7 @@ fi
   exit 2
 }
 
-log "4/6 Download merged model (private; token from the environment)"
+log "4/6 Download merged model (token from the environment when set)"
 mkdir -p "$MERGED_DIR"
 printf '+ huggingface_hub.snapshot_download(repo_id=%s, local_dir=%s)\n' "$MERGED_REPO" "$MERGED_DIR"
 "$CONVERT_PY" - <<'PY'
@@ -149,7 +151,7 @@ print(f"downloading {os.environ['MERGED_REPO']} -> {os.environ['MERGED_DIR']}")
 path = snapshot_download(
     repo_id=os.environ["MERGED_REPO"],
     local_dir=os.environ["MERGED_DIR"],
-    token=os.environ["HF_TOKEN"],
+    token=os.environ.get("HF_TOKEN"),
 )
 print("download complete:", path)
 PY

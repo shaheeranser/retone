@@ -45,7 +45,9 @@ class TrainSettings:
     seed: int = 3407
     resume: bool = False
     output_dir: Path = Path("outputs")
-    private: bool = True
+    private: bool = False
+    push: bool = True
+    merge: bool = True
 
 
 @dataclass
@@ -273,11 +275,24 @@ def _restore_checkpoint(settings: TrainSettings, token: str) -> Path | None:
     return _latest_checkpoint(settings.output_dir)
 
 
+def _ensure_repo(api: Any, repo_id: str, private: bool) -> None:
+    """Create the repo and enforce its visibility.
+
+    `create_repo(..., exist_ok=True)` leaves an existing repo's visibility
+    alone, so a repo first created while private stays private and keeps
+    counting against the free private-storage quota. Flip it explicitly.
+    """
+    api.create_repo(repo_id=repo_id, private=private, exist_ok=True)
+    update = getattr(api, "update_repo_settings", None)
+    if update is not None:
+        update(repo_id=repo_id, private=private)
+
+
 def _upload_folder(folder: Path, repo_id: str, token: str, private: bool) -> None:
     from huggingface_hub import HfApi
 
     api = HfApi(token=token)
-    api.create_repo(repo_id=repo_id, private=private, exist_ok=True)
+    _ensure_repo(api, repo_id, private)
     api.upload_folder(repo_id=repo_id, folder_path=str(folder), token=token)
 
 
@@ -291,11 +306,9 @@ def train_once(
     from unsloth.trainer import UnslothVisionDataCollator
 
     api = HfApi(token=token)
-    if is_main():
-        api.create_repo(repo_id=settings.output_repo, private=settings.private, exist_ok=True)
-        api.create_repo(
-            repo_id=f"{settings.output_repo}-merged", private=settings.private, exist_ok=True
-        )
+    if is_main() and settings.push:
+        _ensure_repo(api, settings.output_repo, settings.private)
+        _ensure_repo(api, f"{settings.output_repo}-merged", settings.private)
 
     loaded = load_model(
         settings.model_name,
@@ -333,11 +346,11 @@ def train_once(
         dataset_kwargs={"skip_prepare_dataset": True},
         # Only rank 0 pushes; every rank uploading the same checkpoint would
         # race on the Hub and multiply the egress.
-        push_to_hub=is_main(),
-        hub_model_id=settings.output_repo if is_main() else None,
+        push_to_hub=is_main() and settings.push,
+        hub_model_id=settings.output_repo if is_main() and settings.push else None,
         hub_strategy="every_save",
         hub_private_repo=settings.private,
-        hub_token=token if is_main() else None,
+        hub_token=token if is_main() and settings.push else None,
     )
     trainer_kwargs: dict[str, Any] = {
         "model": loaded.model,
@@ -376,13 +389,17 @@ def train_once(
         # the local directory, which would otherwise be written twice at once.
         return loaded
 
-    loaded.model.push_to_hub(settings.output_repo, private=settings.private, token=token)
+    if not settings.merge:
+        return loaded
+    if settings.push:
+        loaded.model.push_to_hub(settings.output_repo, private=settings.private, token=token)
     merged_dir = settings.output_dir / "merged"
     loaded.model.save_pretrained_merged(
         str(merged_dir), loaded.tokenizer, save_method="merged_16bit"
     )
-    _upload_folder(merged_dir, f"{settings.output_repo}-merged", token, settings.private)
-    shutil.rmtree(merged_dir, ignore_errors=True)
+    if settings.push:
+        _upload_folder(merged_dir, f"{settings.output_repo}-merged", token, settings.private)
+        shutil.rmtree(merged_dir, ignore_errors=True)
     return loaded
 
 
